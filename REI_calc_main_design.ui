@@ -2123,6 +2123,9 @@
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
+    <property name="contextMenuPolicy">
+     <enum>Qt::ActionsContextMenu</enum>
+    </property>
     <property name="title">
      <string>File</string>
     </property>
@@ -2130,6 +2133,8 @@
     <addaction name="actionLoad"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExecute"/>
     <addaction name="actionSend"/>
@@ -2198,10 +2203,15 @@
     <string>SFI</string>
    </property>
   </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="SFI-white.qrc"/>
-  <include location="../../../../.designer/backup/SFI-white.qrc"/>
+  <include location="SFI-white.qrc"/>
  </resources>
  <connections/>
 </ui>
