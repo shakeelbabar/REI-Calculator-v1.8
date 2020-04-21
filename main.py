@@ -1,11 +1,11 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QDialog, QColorDialog
+from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
-from pandas import DataFrame, IndexSlice
 
 from REI_calc_main_design import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
 import REI_Calculations
+import data_output
 
 
 class SettingsWindow(QDialog):
@@ -19,12 +19,12 @@ class SettingsWindow(QDialog):
         self.set_default_colors()
 
     def set_default_colors(self):
-        settings = QtCore.QSettings('calculator_settings')
-        if not settings.value('caption_bgcolor'):
-            print('Setting default colors')
-            settings.setValue('caption_bgcolor', self.caption_bgcolor)
-            settings.setValue('special_row_bgcolor', self.caption_bgcolor)
-        
+        settings = QtCore.QSettings("calculator_settings")
+        if not settings.value("caption_bgcolor"):
+            print("Setting default colors")
+            settings.setValue("caption_bgcolor", self.caption_bgcolor)
+            settings.setValue("special_row_bgcolor", self.caption_bgcolor)
+
         # set default colors
         color_name = "QPushButton { background-color: color_name }".replace(
             "color_name", self.caption_bgcolor
@@ -71,7 +71,41 @@ class SettingsWindow(QDialog):
         self.close()
 
 
-class CalculatorWindow(QtWidgets.QMainWindow):
+class CalculatorWindow(QtWidgets.QMainWindow):  
+    # purchase information
+    purchase_price = 0
+    rehab_budget = 0
+    closing_costs = 0
+    finance_rehab_logical = 0
+    emergency_fund = 0
+    
+    # fixed expenses
+    electric = 0
+    WandS = 0
+    PMI = 0
+    garbage = 0
+    HOA = 0
+    insurance = 0
+    taxes = 0
+    other = 0
+    
+    # variable expenses
+    vacancy = 0
+    rep_and_main = 0
+    cap_ex = 0
+    other_income = 0
+    management = 0
+
+    # income
+    total_income_monthly = 0
+    ave_rent = 0
+    rental_income_monthly = 0
+    
+    # assumptions 
+    downpayment = 0
+    term_years = 0
+    
+    
     def __init__(self):
         super(CalculatorWindow, self).__init__()
         self.ui = Ui_MainWindow()
@@ -81,21 +115,81 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def init_signals(self):
         self.ui.Generate_Report.clicked.connect(self.generate_report)
         self.ui.actionSettings.triggered.connect(self.settings_window)
+        # auto fields
+        self.ui.r_and_m_input.editingFinished.connect(
+            self.repair_and_maintenance_changed
+        )
+        self.ui.cap_ex_input.editingFinished.connect(self.cap_ex_changed)
+        self.ui.ave_rent_input.editingFinished.connect(self.ave_rent_changed)
+        self.ui.other_income_month_input.editingFinished.connect(
+            self.other_income_month_changed
+        )
 
     def settings_window(self):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
 
+    def other_income_month_changed(self):
+        try:
+            self.other_income = float(
+                self.ui.other_income_month_input.text()
+                .strip()
+                .replace("%", "")
+                .replace(",", ".")
+            )
+        except Exception as ex:
+            print(ex)
+            self.show_message("Wrong value for other income month", msg_type="warning")
+
+    def ave_rent_changed(self):
+        try:
+            self.ave_rent = float(
+                self.ui.ave_rent_input.text().strip().replace("%", "").replace(",", ".")
+            )
+        except Exception as ex:
+            print(ex)
+            self.show_message(
+                "Wrong value for average rent per unit", msg_type="warning"
+            )
+
+    def repair_and_maintenance_changed(self):
+        try:
+            self.rep_and_main = float(
+                self.ui.r_and_m_input.text().strip().replace("%", "").replace(",", ".")
+            )
+        except Exception as ex:
+            print(ex)
+            self.show_message(
+                "Wrong value for repair and maintenance", msg_type="warning"
+            )
+
+    def cap_ex_changed(self):
+        try:
+            self.cap_ex = float(
+                self.ui.cap_ex_input.text().strip().replace("%", "").replace(",", ".")
+            )
+        except Exception as ex:
+            print(ex)
+            self.show_message("Wrong value for cap. ex", msg_type="warning")
+
     def generate_report(self):
         print("Running calculations...")
         self.run_calculations()
 
-    def set_dataframe_style(self):
-        """Set style for dataframe in charge of storing all final calculations"""
-        df.style.set_properties(
-            **{"background-color": "green", "color": "white", "border-color": "white"},
-            subset=IndexSlice[1, ["id", "count", "type"]]
-        )
+    def show_message(self, message, details=None, msg_type="info"):
+        msg = QMessageBox()
+        if msg_type == "warning":
+            msg.setIcon(QMessageBox.Warning)
+        else:
+            msg.setIcon(QMessageBox.Information)
+
+        msg.setText(message)
+        msg.setWindowTitle("Message")
+        if details:
+            msg.setInformativeText(details)
+            msg.setDetailedText(details)
+
+        msg.exec_()
 
     def run_calculations(self):
         ## Initially we just need to calculate the 12 key figures.
