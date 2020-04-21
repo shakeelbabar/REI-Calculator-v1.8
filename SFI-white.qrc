@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>SFI-white.png</file>
+  </qresource>
+</RCC>
