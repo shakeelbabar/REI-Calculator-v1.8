@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
-
+from collections import defaultdict
 from REI_calc_main_design import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
 import REI_Calculations
@@ -73,7 +73,9 @@ class SettingsWindow(QDialog):
 
 
 class CalculatorWindow(QtWidgets.QMainWindow):  
-            
+    
+    data = None
+    
     # purchase information
     arv = 0
     loan_amount_auto = 0
@@ -117,19 +119,19 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     prop_appreciation = 0
     
     
-    
     def __init__(self):
         super(CalculatorWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.init_signals()
         self.init_validators()
+        
+        self.data = defaultdict(list)
 
     def init_signals(self):
         self.ui.Generate_Report.clicked.connect(self.generate_report)
         self.ui.actionSettings.triggered.connect(self.settings_window)
-        
-        
+                
         # auto fields
         self.ui.r_and_m_input.editingFinished.connect(
             self.repair_and_maintenance_changed
@@ -301,7 +303,14 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         fifty_perc = REI_Calculations.fifty_perc_rule(
             fixed_monthly, var_monthly, self.total_income_monthly
         )
-
+        
+        self.general_analysis_and_results = [
+            [cash_2_close, self.purchase_price, self.tot_monthly_income], 
+            [var_monthly, cf_monthly, 0], 
+            [NIAF, NIAF, CoCR],
+            [capRate, 0, GRM]
+        ]
+            
         ## Will need to store this data now as some of it may be overwritten
         # during the pro forma construction
 
@@ -318,7 +327,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         for year_index in length_yrs:
             # Everything will be on a yearly scale and we may calculate some
             # variables two time for this first year
-
+            
             # Calculate total annual income for each year
             tot_income_annual = REI_Calculations.future_value(
                 self.rent_appreciation, year_index - 1, 0, self.tot_monthly_income
@@ -388,6 +397,16 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             CAGR = REI_Calculations.compound_annual_growth_rate(
                 total_profit_sold, year_index, cash_2_close
             )
+            
+            self.data[f'Year_{year_index}'] = [
+                tot_income_annual, tot_expense_yearly, fixed_yearly,
+                var_yearly, NOI, 0,
+                0, NIAF, prop_value,
+                CoCR ,cum_CoCR, tot_equity,
+                equity_perc, ROI, total_profit_sold,
+                CAGR
+            ]
+
 
 
 if __name__ == "__main__":
