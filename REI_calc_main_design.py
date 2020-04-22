@@ -13,7 +13,7 @@ import resources
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(798, 958)
+        MainWindow.resize(798, 962)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.Tabs = QtWidgets.QTabWidget(self.centralwidget)
@@ -315,6 +315,7 @@ class Ui_MainWindow(object):
         font.setFamily("Arial")
         font.setPointSize(13)
         self.asking_price_input.setFont(font)
+        self.asking_price_input.setInputMask("")
         self.asking_price_input.setObjectName("asking_price_input")
         self.Purchase_Form.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.asking_price_input)
         self.purchase_price_input = QtWidgets.QLineEdit(self.formLayoutWidget_2)
@@ -1082,7 +1083,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.Tabs.setCurrentIndex(3)
+        self.Tabs.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

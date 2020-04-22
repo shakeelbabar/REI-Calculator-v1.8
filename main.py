@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
 
@@ -72,24 +73,17 @@ class SettingsWindow(QDialog):
 
 
 class CalculatorWindow(QtWidgets.QMainWindow):  
-    
-    selling_costs = 0
-    int_rate = 0
-    loan_amount_auto = 0
-    prop_appreciation = 0
-    arv = 0
-    repair_and_maintenance = 0
-    rent_appreciation = 0
-    exp_appreciation = 0
-    tot_monthly_income = 0
-    
+            
     # purchase information
+    arv = 0
+    loan_amount_auto = 0
+    int_rate = 0
+    downpayment = 0
     purchase_price = 0
     rehab_budget = 0
     closing_costs = 0
     finance_rehab_logical = 0
     emergency_fund = 0
-    downpayment = 0
     term_years = 0
     
     # fixed expenses
@@ -103,6 +97,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     other = 0
     
     # variable expenses
+    repair_and_maintenance = 0
     vacancy = 0
     rep_and_main = 0
     cap_ex = 0
@@ -111,10 +106,15 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
     # income
     total_income_monthly = 0
+    tot_monthly_income = 0
     ave_rent = 0
     rental_income_monthly = 0
     
     # assumptions 
+    exp_appreciation = 0
+    rent_appreciation = 0
+    selling_costs = 0
+    prop_appreciation = 0
     
     
     
@@ -123,10 +123,13 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.init_signals()
+        self.init_validators()
 
     def init_signals(self):
         self.ui.Generate_Report.clicked.connect(self.generate_report)
         self.ui.actionSettings.triggered.connect(self.settings_window)
+        
+        
         # auto fields
         self.ui.r_and_m_input.editingFinished.connect(
             self.repair_and_maintenance_changed
@@ -136,6 +139,32 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.other_income_month_input.editingFinished.connect(
             self.other_income_month_changed
         )
+
+    def init_validators(self):
+        # purchase information tab
+        self.ui.asking_price_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.purchase_price_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.rehab_budget_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.arv_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.closing_costs_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.emerg_fund_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        # income tab
+        self.ui.ave_rent_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.other_income_month_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        # expenses tab
+        self.ui.electric_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.w_and_s_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.hoa_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.other_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.r_and_m_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.cap_ex_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.vacancy_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.manag_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        # assumptions tab
+        self.ui.rent_appreciation_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.exp_appreciation_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.prop_appreciation_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
+        self.ui.selling_costs_input.setValidator(QDoubleValidator(999999999, -999999999, 8))
 
     def settings_window(self):
         settings_dialog = SettingsWindow(self)
