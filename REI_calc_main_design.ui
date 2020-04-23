@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>798</width>
+    <width>985</width>
     <height>962</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>771</width>
+      <width>971</width>
       <height>881</height>
      </rect>
     </property>
@@ -33,7 +33,7 @@
      <bool>false</bool>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>3</number>
     </property>
     <property name="tabsClosable">
      <bool>false</bool>
@@ -1347,7 +1347,7 @@
        <rect>
         <x>10</x>
         <y>150</y>
-        <width>341</width>
+        <width>451</width>
         <height>441</height>
        </rect>
       </property>
@@ -1648,7 +1648,7 @@
      <widget class="QLabel" name="Variable_Subheader">
       <property name="geometry">
        <rect>
-        <x>370</x>
+        <x>470</x>
         <y>120</y>
         <width>161</width>
         <height>16</height>
@@ -1669,9 +1669,9 @@
      <widget class="QWidget" name="formLayoutWidget_7">
       <property name="geometry">
        <rect>
-        <x>370</x>
+        <x>470</x>
         <y>150</y>
-        <width>381</width>
+        <width>481</width>
         <height>433</height>
        </rect>
       </property>
@@ -2226,7 +2226,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>798</width>
+     <width>985</width>
      <height>31</height>
     </rect>
    </property>

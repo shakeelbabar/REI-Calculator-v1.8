@@ -13,11 +13,11 @@ import resources
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(798, 962)
+        MainWindow.resize(985, 962)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.Tabs = QtWidgets.QTabWidget(self.centralwidget)
-        self.Tabs.setGeometry(QtCore.QRect(0, 0, 771, 881))
+        self.Tabs.setGeometry(QtCore.QRect(0, 0, 971, 881))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(14)
@@ -577,7 +577,7 @@ class Ui_MainWindow(object):
         self.Logo_exp.setScaledContents(True)
         self.Logo_exp.setObjectName("Logo_exp")
         self.formLayoutWidget_5 = QtWidgets.QWidget(self.Expense_Tab)
-        self.formLayoutWidget_5.setGeometry(QtCore.QRect(10, 150, 341, 441))
+        self.formLayoutWidget_5.setGeometry(QtCore.QRect(10, 150, 451, 441))
         self.formLayoutWidget_5.setObjectName("formLayoutWidget_5")
         self.Expense_Fixed_Form = QtWidgets.QFormLayout(self.formLayoutWidget_5)
         self.Expense_Fixed_Form.setContentsMargins(0, 10, 0, 10)
@@ -740,7 +740,7 @@ class Ui_MainWindow(object):
         self.Fixed_Subheader.setFont(font)
         self.Fixed_Subheader.setObjectName("Fixed_Subheader")
         self.Variable_Subheader = QtWidgets.QLabel(self.Expense_Tab)
-        self.Variable_Subheader.setGeometry(QtCore.QRect(370, 120, 161, 16))
+        self.Variable_Subheader.setGeometry(QtCore.QRect(470, 120, 161, 16))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(14)
@@ -749,7 +749,7 @@ class Ui_MainWindow(object):
         self.Variable_Subheader.setFont(font)
         self.Variable_Subheader.setObjectName("Variable_Subheader")
         self.formLayoutWidget_7 = QtWidgets.QWidget(self.Expense_Tab)
-        self.formLayoutWidget_7.setGeometry(QtCore.QRect(370, 150, 381, 433))
+        self.formLayoutWidget_7.setGeometry(QtCore.QRect(470, 150, 481, 433))
         self.formLayoutWidget_7.setObjectName("formLayoutWidget_7")
         self.Expense_Var_Form = QtWidgets.QFormLayout(self.formLayoutWidget_7)
         self.Expense_Var_Form.setContentsMargins(0, 10, 0, 10)
@@ -1030,7 +1030,7 @@ class Ui_MainWindow(object):
         self.Tabs.addTab(self.Report_Tab, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 798, 31))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 985, 31))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
@@ -1081,7 +1081,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.Tabs.setCurrentIndex(0)
+        self.Tabs.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

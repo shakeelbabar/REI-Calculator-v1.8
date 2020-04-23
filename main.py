@@ -153,6 +153,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.data = defaultdict(list)        
         
         self.auto_calculations()
+        #self.update_total_exp_auto()
         
     def auto_calculations(self):
         self.auto_loan_amount()
@@ -310,6 +311,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.cap_ex_input.textChanged.connect(self.cap_ex_input_changed)       
         self.ui.r_and_m_input.textChanged.connect(self.r_and_m_input_changed)       
         self.ui.manag_input.textChanged.connect(self.manag_input_changed)       
+        self.ui.electric_input.textChanged.connect(self.electric_input_changed)       
 
     def init_validators(self):
         # purchase information tab
@@ -341,8 +343,23 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
 
+    def electric_input_changed(self):
+        try:
+            self.electric = float(self.ui.electric_input.text())
+        except ValueError:
+            self.ui.electric_input.setText("0")
+        
+        self.update_total_exp_auto()
+        
     def manag_input_changed(self):
-        self.management = float(self.ui.manag_input.text())
+        try:
+            self.management = float(self.ui.manag_input.text())
+        except ValueError:
+            self.ui.manag_auto.setText("0")
+            self.ui.tot_fixed_exp_auto.setText("0")
+            self.ui.tot_var_exp_auto.setText("0")            
+            return
+        
         self.management_dollar = REI_Calculations.calculate_dollar_amount(
             self.total_income_monthly,
             self.management
@@ -350,24 +367,49 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.manag_auto.setText(str(self.management))
         
     def r_and_m_input_changed(self):
-        self.rep_and_main = float(self.ui.r_and_m_input.text())
+        """Repair and maintenance"""
+        try:
+            self.rep_and_main = float(self.ui.r_and_m_input.text())
+        except ValueError:
+            self.ui.r_and_m_auto.setText("0")
+            #self.ui.tot_fixed_exp_auto.setText("0")
+            self.ui.tot_var_exp_auto.setText("0")
+            return
+        
         self.rep_and_main_dollar = REI_Calculations.calculate_dollar_amount(
             self.total_income_monthly,
             self.rep_and_main
         )
         self.ui.r_and_m_auto.setText(str(self.rep_and_main_dollar))
+        # update total (fixed, variable) expenses
         self.update_total_exp_auto()
         
     def update_total_exp_auto(self):
-        self.total_variable_expense = REI_Calculations.variable_expenses_monthly(
+        """Update total expenses (fixed and variable)
+        """
+        self.total_variable_expense, _ = REI_Calculations.variable_expenses_monthly(
+            self.total_income_monthly,
             self.rep_and_main_dollar,
             self.cap_ex_dollar,
             self.vacancy_dollar,
             self.management_dollar
         )
+        self.ui.tot_var_exp_auto.setText(str(self.total_variable_expense))
+        
+        self.total_fixed_expense, _ = REI_Calculations.fixed_expenses_monthly(
+            self.electric, self.WandS, self.PMI,
+            self.garbage, self.HOA, self.insurance,
+            self.taxes, self.other
+        )
+        self.ui.tot_fixed_exp_auto.setText(str(self.total_fixed_expense))
         
     def cap_ex_input_changed(self):
-        self.cap_ex = float(self.ui.cap_ex_input.text())
+        try:
+            self.cap_ex = float(self.ui.cap_ex_input.text())
+        except ValueError:
+            self.ui.cap_ex_auto.setText("0")
+            return
+        
         self.cap_ex_dollar = REI_Calculations.calculate_dollar_amount(
             self.total_income_monthly,
             self.cap_ex
@@ -375,7 +417,12 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.cap_ex_auto.setText(str(self.cap_ex_dollar))
     
     def vacancy_input_changed(self):
-        self.vacancy = float(self.ui.vacancy_input.text())
+        try:
+            self.vacancy = float(self.ui.vacancy_input.text())
+        except ValueError:
+            self.ui.vacancy_auto.setText("0")
+            return
+        
         self.vacancy_dollar = REI_Calculations.calculate_dollar_amount(
             self.total_income_monthly, 
             self.vacancy
@@ -391,7 +438,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 .replace(",", ".")
             )
         except Exception as ex:
-            print(ex)
             self.show_message("Wrong value for other income month", msg_type="warning")
 
     def downpayment_percent_changed(self, value):
@@ -439,9 +485,9 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 self.ui.r_and_m_input.text().strip().replace("%", "").replace(",", ".")
             )
         except Exception as ex:
-            print(ex)
             self.show_message(
-                "Wrong value for repair and maintenance", msg_type="warning"
+                message="Wrong value for repair and maintenance", 
+                msg_type="warning"
             )
 
     def cap_ex_changed(self):
@@ -450,8 +496,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 self.ui.cap_ex_input.text().strip().replace("%", "").replace(",", ".")
             )
         except Exception as ex:
-            print(ex)
-            self.show_message("Wrong value for cap. ex", msg_type="warning")
+            self.show_message(message="Wrong value for cap. ex", 
+                              msg_type="warning")
 
     def generate_report(self):
         if not self.validate_values():
