@@ -155,10 +155,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.auto_calculations()
         
     def auto_calculations(self):
-        #if not self.validate_values():
-        #    print("auto_calculations: could not validate values")
-        #    return        
-        
         self.auto_loan_amount()
         
     def init_fake_values(self):
@@ -309,6 +305,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.term_input_2.valueChanged.connect(self.term_years_changed)
         # calculate downpayment $ when downpayment % is changed
         self.ui.downpayment_percentage_input_2.valueChanged.connect(self.downpayment_percent_changed)        
+        # expenses tab auto fields
+        self.ui.vacancy_input.textChanged.connect(self.vacancy_input_changed)       
+        self.ui.cap_ex_input.textChanged.connect(self.cap_ex_input_changed)       
+        self.ui.r_and_m_input.textChanged.connect(self.r_and_m_input_changed)       
+        self.ui.manag_input.textChanged.connect(self.manag_input_changed)       
 
     def init_validators(self):
         # purchase information tab
@@ -340,6 +341,47 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
 
+    def manag_input_changed(self):
+        self.management = float(self.ui.manag_input.text())
+        self.management_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly,
+            self.management
+        )
+        self.ui.manag_auto.setText(str(self.management))
+        
+    def r_and_m_input_changed(self):
+        self.rep_and_main = float(self.ui.r_and_m_input.text())
+        self.rep_and_main_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly,
+            self.rep_and_main
+        )
+        self.ui.r_and_m_auto.setText(str(self.rep_and_main_dollar))
+        self.update_total_exp_auto()
+        
+    def update_total_exp_auto(self):
+        self.total_variable_expense = REI_Calculations.variable_expenses_monthly(
+            self.rep_and_main_dollar,
+            self.cap_ex_dollar,
+            self.vacancy_dollar,
+            self.management_dollar
+        )
+        
+    def cap_ex_input_changed(self):
+        self.cap_ex = float(self.ui.cap_ex_input.text())
+        self.cap_ex_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly,
+            self.cap_ex
+        )
+        self.ui.cap_ex_auto.setText(str(self.cap_ex_dollar))
+    
+    def vacancy_input_changed(self):
+        self.vacancy = float(self.ui.vacancy_input.text())
+        self.vacancy_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly, 
+            self.vacancy
+        )
+        self.ui.vacancy_auto.setText(str(self.vacancy_dollar))
+    
     def other_income_month_changed(self):
         try:
             self.other_income = float(
@@ -354,7 +396,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
     def downpayment_percent_changed(self, value):
         self.downpayment = value
-        self.downpayment_dollar = REI_Calculations.calculate_amount(
+        self.downpayment_dollar = REI_Calculations.calculate_dollar_amount(
             self.purchase_price, self.downpayment
         )
         self.ui.dp_dollar_auto_2.setText(str(self.downpayment_dollar))                    

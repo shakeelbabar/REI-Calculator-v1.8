@@ -7,7 +7,7 @@ def loan_payment(rate, term, present_value):
             (pow(1 + monthly_rate,term_months)-1)
     return payment
 
-def calculate_amount(base_amount, percentage):
+def calculate_dollar_amount(base_amount, percentage):
     # This function will be used for the "_auto" tags on the 
     # Expenses sheet, and the downpayment calculation on Purchase sheet
     amount = base_amount * percentage
