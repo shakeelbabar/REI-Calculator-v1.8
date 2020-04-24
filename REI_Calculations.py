@@ -3,7 +3,7 @@ def loan_payment(rate, term, present_value):
     monthly_rate = rate / 12
     term_months = term * 12
     payment     = present_value * \
-        (monthly_rate * pow(1 + monthly_rate,term_months)) / \
+        (monthly_rate * pow(1 + monthly_rate, term_months)) / \
             (pow(1 + monthly_rate,term_months)-1)
     return payment
 
@@ -131,7 +131,7 @@ def future_equity(fut_value_property, fut_value_loan):
     return tot_equity
 
 def tot_profit_sold(fut_value_property, selling_costs_perc, fut_value_loan, \
-    cash_2_close, cum_NIAF):
+    cash_2_close, cum_NIAF, downpayment):
     total_profit_sold = fut_value_property * (1 - selling_costs_perc) \
         - fut_value_loan - downpayment + cum_NIAF
     return total_profit_sold

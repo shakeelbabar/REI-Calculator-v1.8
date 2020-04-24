@@ -3,10 +3,13 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
 from collections import defaultdict
+from random import randint
+from pandas import DataFrame
+
 from REI_calc_main_design import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
 import REI_Calculations
-import data_output
+import data_output 
 
 
 class SettingsWindow(QDialog):
@@ -22,7 +25,6 @@ class SettingsWindow(QDialog):
     def set_default_colors(self):
         settings = QtCore.QSettings("calculator_settings")
         if not settings.value("caption_bgcolor"):
-            print("Setting default colors")
             settings.setValue("caption_bgcolor", self.caption_bgcolor)
             settings.setValue("special_row_bgcolor", self.caption_bgcolor)
 
@@ -76,6 +78,9 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     
     # data for html table
     data = None
+    # data without format (decimal separator, percent, dollar,...)
+    tmp_data = None
+    
     general_analysis_and_results = None
     
     # property info
@@ -151,9 +156,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
         # init data structures
         self.data = defaultdict(list)        
+        self.tmp_data = defaultdict(list)        
         
         self.auto_calculations()
-        #self.update_total_exp_auto()
+        self.update_total_exp_auto()
         
     def auto_calculations(self):
         self.auto_loan_amount()
@@ -170,12 +176,12 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.property_images = []
         
         self.asking_price = 120000
-        self.rate = 120
+        self.rate = 4.5 / 100
         self.term = 234
         self.present_value = 4000
         self.arv = 1
         self.loan_amount_auto = 0
-        self.int_rate = 4.5
+        self.int_rate = 4.5 / 100
         self.downpaymeinit_validatorsnt = 20
         self.downpayment_dollar = 40000
         self.purchase_price = 200000
@@ -312,6 +318,14 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.r_and_m_input.textChanged.connect(self.r_and_m_input_changed)       
         self.ui.manag_input.textChanged.connect(self.manag_input_changed)       
         self.ui.electric_input.textChanged.connect(self.electric_input_changed)       
+        self.ui.w_and_s_input.textChanged.connect(self.w_and_s_input_changed)       
+        self.ui.pmi_input.textChanged.connect(self.pmi_input_changed)       
+        self.ui.garbage_input.textChanged.connect(self.garbage_input_changed)       
+        self.ui.hoa_input.textChanged.connect(self.hoa_input_changed)       
+        self.ui.other_input.textChanged.connect(self.other_input_changed)
+        # property
+        self.ui.annual_insurance_input.textChanged.connect(self.annual_insurance_input_changed)
+        self.ui.taxes_input.textChanged.connect(self.taxes_input_changed)
 
     def init_validators(self):
         # purchase information tab
@@ -343,6 +357,66 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
 
+    def taxes_input_changed(self):
+        try:
+            self.taxes = float(self.ui.taxes_input.text()) / 12            
+        except ValueError:
+            self.ui.taxes_input.setText("0")
+            return
+        
+        self.ui.monthly_taxes_auto.setText(str(self.taxes))
+        self.update_total_exp_auto()
+        
+    def annual_insurance_input_changed(self):
+        try:
+            self.insurance = float(self.ui.annual_insurance_input.text()) / 12            
+        except ValueError:
+            self.ui.insurance_auto.setText("0")
+            return
+        
+        self.ui.insurance_auto.setText(str(self.insurance))
+        self.update_total_exp_auto()
+    
+    def other_input_changed(self):
+        try:
+            self.other = float(self.ui.other_input.text())
+        except ValueError:
+            self.ui.other_input.setText("0")
+        
+        self.update_total_exp_auto()
+
+    def garbage_input_changed(self):
+        try:
+            self.garbage = float(self.ui.garbage_input.text())
+        except ValueError:
+            self.ui.garbage_input.setText("0")
+        
+        self.update_total_exp_auto()
+
+    def hoa_input_changed(self):
+        try:
+            self.HOA = float(self.ui.hoa_input.text())
+        except ValueError:
+            self.ui.hoa_input.setText("0")
+        
+        self.update_total_exp_auto()
+
+    def pmi_input_changed(self):
+        try:
+            self.PMI = float(self.ui.pmi_input.text())
+        except ValueError:
+            self.ui.pmi_input.setText("0")
+        
+        self.update_total_exp_auto()
+
+    def w_and_s_input_changed(self):
+        try:
+            self.WandS = float(self.ui.w_and_s_input.text())
+        except ValueError:
+            self.ui.w_and_s_input.setText("0")
+        
+        self.update_total_exp_auto()
+        
     def electric_input_changed(self):
         try:
             self.electric = float(self.ui.electric_input.text())
@@ -509,9 +583,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             print("No data after calculations")
             return
         
-        df = DataFrame.from_dict(self.data)
-        with open('report.html', 'w') as f:
-            f.write(df.to_html())
+        # dataframe for plotting three totals
+        plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
+        print(plot_data)
+                    
+        data_output.generate_report(self.general_analysis_and_results, self.data, plot_data)
         
 
     def show_message(self, message, details=None, msg_type="info"):
@@ -535,6 +611,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
         # Begin by calculating the monthly payment of the loan
         try:
+            print(f'rate: {self.rate} term: {self.term}  present value: {self.present_value}')
             payment = REI_Calculations.loan_payment(self.rate, self.term, self.present_value)
         except Exception as ex:
             _, _, tb = sys.exc_info()
@@ -620,12 +697,28 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         fifty_perc = REI_Calculations.fifty_perc_rule(
             fixed_monthly, var_monthly, self.total_income_monthly
         )
-        
+               
         self.general_analysis_and_results = [
-            [cash_2_close, self.purchase_price, self.tot_monthly_income], 
-            [var_monthly, cf_monthly, one_perc], 
-            [NIAF, NIAF, CoCR],
-            [capRate, fifty_perc, GRM]
+            [ 
+                '${:0,.2f}'.format(cash_2_close),  
+                '${:0,.2f}'.format(self.purchase_price), 
+                '${:0,.2f}'.format(self.tot_monthly_income)
+            ], 
+            [ 
+                '${:0,.2f}'.format(var_monthly), 
+                '${:0,.2f}'.format(cf_monthly), 
+                '{:0,.2f}%'.format(one_perc)
+            ], 
+            [ 
+                '${:0,.2f}'.format(NOI),  
+                '${:0,.2f}'.format(NIAF), 
+                '{:0,.2f}%'.format(CoCR)
+            ],
+            [ 
+                '{:0,.2f}%'.format(capRate), 
+                '{:0,.2f}%'.format(fifty_perc),  
+                '{:0,.2f}'.format(GRM)
+            ]
         ]
             
         ## Will need to store this data now as some of it may be overwritten
@@ -657,11 +750,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate total variable expenses for each year
             var_yearly = tot_income_annual * sum(
-                self.repair_and_maintenance, self.cap_ex, self.vacancy, self.management
+                [self.rep_and_main, self.cap_ex, self.vacancy, self.management]
             )
 
             # Calculate Total Expenses
-            tot_expense_yearly = sum(fixed_yearly, var_yearly)
+            tot_expense_yearly = sum([fixed_yearly, var_yearly])
 
             # Calculate NOI
             NOI = REI_Calculations.NOI_yearly(
@@ -707,7 +800,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate profit if sold
             total_profit_sold = REI_Calculations.tot_profit_sold(
-                prop_value, self.selling_costs, self.loan_balance, cash_2_close, cum_NIAF
+                prop_value, self.selling_costs, self.loan_amount_auto, cash_2_close, 
+                cum_NIAF, self.downpayment_dollar
             )
 
             # Calculate the compounded annual growth rate (CAGR) if sold
@@ -715,13 +809,38 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 total_profit_sold, year_index, cash_2_close
             )
             
-            self.data[f'Year_{year_index}'] = [
+            self.tmp_data[f'Year_{year_index}'] = [
                 tot_income_annual, tot_expense_yearly, fixed_yearly,
                 var_yearly, NOI, 0,
                 0, NIAF, prop_value,
-                CoCR ,cum_CoCR, tot_equity,
+                CoCR, cum_CoCR, tot_equity,
                 equity_perc, ROI, total_profit_sold,
                 CAGR
+            ]
+            
+            self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
+            
+            tot_income_annual = '{:0,.2f}'.format(tot_income_annual)
+            tot_expense_yearly = '{:0,.2f}'.format(tot_expense_yearly)
+            fixed_yearly = '{:0,.2f}'.format(fixed_yearly)
+            var_yearly = '{:0,.2f}'.format(var_yearly)
+            NOI = '{:0,.2f}'.format(NOI)
+            NIAF = '{:0,.2f}'.format(NIAF)
+            prop_value = '{:0,.2f}'.format(prop_value)
+            tot_equity = '{:0,.2f}'.format(tot_equity)
+            ROI = '{:0,.2f}'.format(ROI)
+            total_profit_sold= '{:0,.2f}'.format(total_profit_sold)
+            equity_perc = '{:0,.2f}'.format(equity_perc)
+            #CAGR= '{:0,.2f}'.format(CAGR)
+            
+            
+            self.data[f'Year_{year_index}'] = [
+                f'${tot_income_annual}', f'${tot_expense_yearly}', f'${fixed_yearly}',
+                f'${var_yearly}', f'${NOI}', '0.0%',
+                '$0', f'${NIAF}', f'${prop_value}',
+                f'{CoCR}%' ,f'{cum_CoCR}%', f'${tot_equity}',
+                f'{equity_perc}%', f'{ROI}%', f'${total_profit_sold}',
+                f'{CAGR}%'
             ]
 
 
