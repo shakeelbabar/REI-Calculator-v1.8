@@ -94,13 +94,13 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     
     # purchase information
     asking_price = 0
-    rate = 0
+    rate = 4.5 / 100
     term = 0
     present_value = 0
     arv = 0
     loan_amount_auto = 0
-    int_rate = 0
-    downpayment = 0
+    int_rate = 4.5 / 100
+    downpayment = 20
     downpayment_dollar = 0
     purchase_price = 0
     rehab_budget = 0
@@ -118,7 +118,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     HOA = 0
     insurance = 0
     taxes = 0
-    other = 0
+    other_fixed_expense = 0
     
     # variable expenses
     total_variable_expense = 0
@@ -128,7 +128,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     rep_and_main_dollar = 0
     cap_ex = 0
     cap_ex_dollar = 0
-    other_income = 0
+    other_variable_expense = 0
     management = 0
     management_dollar = 0
 
@@ -144,6 +144,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     rent_appreciation = 0
     selling_costs = 0
     prop_appreciation = 0
+    other_income = 0
     
     
     def __init__(self):
@@ -152,7 +153,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.init_signals()
         self.init_validators()
-        self.init_fake_values() # TODO: remove
+        #self.init_fake_values() # TODO: remove
         
         # init data structures
         self.data = defaultdict(list)        
@@ -162,7 +163,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.update_total_exp_auto()
         
     def auto_calculations(self):
-        self.auto_loan_amount()
+        self.calculate_loan_amount()
         
     def init_fake_values(self):
         """ TODO: delete after testing"""
@@ -178,11 +179,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.asking_price = 120000
         self.rate = 4.5 / 100
         self.term = 234
-        self.present_value = 4000
+        self.present_value = 40000
         self.arv = 1
         self.loan_amount_auto = 0
         self.int_rate = 4.5 / 100
-        self.downpaymeinit_validatorsnt = 20
+        self.downpayment = 20
         self.downpayment_dollar = 40000
         self.purchase_price = 200000
         self.rehab_budget = 50000
@@ -200,32 +201,32 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.HOA = 20
         self.insurance = 20
         self.taxes = 20
-        self.other = 20
+        self.other_variable_expense = 20
         
         # variable expenses
+        self.other_fixed_expense = 20
         self.total_variable_expense = 1200
-        self.vacancy = 210
+        self.vacancy = 210 / 100
         self.vacancy_dollar = 20
-        self.rep_and_main = 10
+        self.rep_and_main = 10 / 100
         self.rep_and_main_dollar = 110
-        self.cap_ex = 30
+        self.cap_ex = 30 / 100
         self.cap_ex_dollar = 4
-        self.other_income = 5
-        self.management = 6
+        self.management = 6 / 100
         self.management_dollar = 60
 
         # income
         self.total_income_monthly = 1300
-        self.tot_monthly_income = 1300
+        self.other_income_month = 1300
         self.ave_rent = 1200
         self.rental_income_monthly = 120
         self.num_units = 1
         
         # assumptions 
-        self.exp_appreciation = 20
-        self.rent_appreciation = 30
-        self.selling_costs = 40
-        self.prop_appreciation = 50        
+        self.exp_appreciation = 20 / 100
+        self.rent_appreciation = 30 / 100
+        self.selling_costs = 40 / 100
+        self.prop_appreciation = 50 / 100
         
     def validate_values(self):
         try:
@@ -256,7 +257,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.num_units = float(self.ui.num_units_input.value())
             self.ave_rent = float(self.ui.ave_rent_input.text())
             self.tot_monthly_income = float(self.ui.tot_rent_month_auto.text())
-            self.other_income = float(self.ui.other_income_month_input.text())
+            self.other_income_month = float(self.ui.other_income_month_input.text())
             self.total_income_monthly = float(self.ui.tot_income_month_auto.text())
             
             # expenses tab inputs
@@ -281,10 +282,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.management_dollar = float(self.ui.manag_auto.text())
             
             # Assumptions tab inputs
-            self.rent_appreciation = float(self.ui.rent_appreciation_input.text())
-            self.exp_appreciation = float(self.ui.exp_appreciation_input.text())
-            self.prop_appreciation = float(self.ui.prop_appreciation_input.text())
-            self.selling_costs = float(self.ui.selling_costs_input.text())
+            self.rent_appreciation = float(self.ui.rent_appreciation_input.text()) / 100
+            self.exp_appreciation = float(self.ui.exp_appreciation_input.text()) / 100
+            self.prop_appreciation = float(self.ui.prop_appreciation_input.text()) / 100
+            self.selling_costs = float(self.ui.selling_costs_input.text()) / 100
             
         except Exception as ex:
             _, _, tb = sys.exc_info()
@@ -310,8 +311,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         )
         self.ui.int_rate_input_2.valueChanged.connect(self.interest_rate_changed)
         self.ui.term_input_2.valueChanged.connect(self.term_years_changed)
+        
         # calculate downpayment $ when downpayment % is changed
-        self.ui.downpayment_percentage_input_2.valueChanged.connect(self.downpayment_percent_changed)        
+        self.ui.downpayment_percentage_input_2.valueChanged.connect(self.downpayment_percent_changed)      
+        
         # expenses tab auto fields
         self.ui.vacancy_input.textChanged.connect(self.vacancy_input_changed)       
         self.ui.cap_ex_input.textChanged.connect(self.cap_ex_input_changed)       
@@ -323,9 +326,24 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.garbage_input.textChanged.connect(self.garbage_input_changed)       
         self.ui.hoa_input.textChanged.connect(self.hoa_input_changed)       
         self.ui.other_input.textChanged.connect(self.other_input_changed)
-        # property
+        
+        # property tab
         self.ui.annual_insurance_input.textChanged.connect(self.annual_insurance_input_changed)
         self.ui.taxes_input.textChanged.connect(self.taxes_input_changed)
+        
+        # income tab
+        self.ui.num_units_input.valueChanged.connect(self.num_units_value_changed)
+        self.ui.ave_rent_input.textChanged.connect(self.ave_rent_input_changed)
+        self.ui.other_income_month_input.textChanged.connect(self.other_income_month_input_changed)
+        self.ui.purchase_price_input.textChanged.connect(self.purchase_price_changed)
+        self.ui.rehab_budget_input.textChanged.connect(self.rehab_budget_changed)
+        self.ui.arv_input.textChanged.connect(self.arv_changed)
+        self.ui.closing_costs_input.textChanged.connect(self.closing_costs_changed)
+        self.ui.emerg_fund_input.textChanged.connect(self.emerg_fund_input)
+        self.ui.fin_rehab_logical.currentIndexChanged.connect(
+            self.fin_rehab_logical_changed
+        )
+        
 
     def init_validators(self):
         # purchase information tab
@@ -356,7 +374,78 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def settings_window(self):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
-
+    
+    def fin_rehab_logical_changed(self, index):
+        self.finance_rehab_logical = self.ui.fin_rehab_logical.currentText()
+   
+    def emerg_fund_input(self):
+        try:
+            self.emergency_fund = float(self.ui.emerg_fund_input.text())
+        except ValueError:
+            self.ui.emerg_fund_input.setText("0")
+    
+    def closing_costs_changed(self):
+        try:
+            self.closing_costs = float(self.ui.closing_costs_input.text())
+        except ValueError:
+            self.ui.closing_costs_input.setText("0")
+    
+    def arv_changed(self):
+        try:
+            self.arv = float(self.ui.arv_input.text())
+        except ValueError:
+            self.ui.arv_input.setText("0")
+    
+    def rehab_budget_changed(self):
+        try:
+            self.rehab_budget = float(self.ui.rehab_budget_input.text())
+            print('rehab. budget:', self.rehab_budget)
+            self.calculate_loan_amount()
+        except ValueError:
+            self.ui.rehab_budget_input.setText("0")
+    
+    def purchase_price_changed(self):
+        try:
+            self.purchase_price = float(self.ui.purchase_price_input.text())
+            self.calculate_downpayment_dollar()
+            self.calculate_loan_amount()
+        except ValueError:
+            self.ui.purchase_price_input.setText("0")
+        
+    def other_income_month_input_changed(self):
+        try:
+            self.total_income_monthly = REI_Calculations.total_monthly_income(
+                self.rental_income_monthly, 
+                self.other_income_month
+            )
+            self.ui.tot_income_month_auto.setText(str(self.total_income_monthly))
+        except ValueError:
+            self.ui.ave_rent_input.setText("0")
+            return
+    
+    def ave_rent_input_changed(self):
+        try:
+            self.ave_rent = int(self.ui.ave_rent_input.text())
+            self.total_income_monthly = REI_Calculations.monthly_rent(self.num_units, self.ave_rent)
+            self.ui.tot_income_month_auto.setText(str(self.total_income_monthly))
+        except ValueError:
+            self.ui.ave_rent_input.setText("0")
+            return
+    
+    def num_units_value_changed(self, value):
+        try:
+            self.num_units = value #int(self.ui.num_units_input.text())
+            self.rental_income_monthly = REI_Calculations.monthly_rent(
+                self.num_units, self.ave_rent
+            )
+            self.ui.tot_rent_month_auto.setText(str(self.rental_income_monthly))
+        except ValueError as ex:            
+            print('num_units_input_changed:', str(ex))
+            return
+        
+        self.ui.monthly_taxes_auto.setText(str(self.taxes))
+        self.update_total_exp_auto()
+    
     def taxes_input_changed(self):
         try:
             self.taxes = float(self.ui.taxes_input.text()) / 12            
@@ -427,7 +516,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
     def manag_input_changed(self):
         try:
-            self.management = float(self.ui.manag_input.text())
+            self.management = float(self.ui.manag_input.text()) / 100
         except ValueError:
             self.ui.manag_auto.setText("0")
             self.ui.tot_fixed_exp_auto.setText("0")
@@ -443,7 +532,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def r_and_m_input_changed(self):
         """Repair and maintenance"""
         try:
-            self.rep_and_main = float(self.ui.r_and_m_input.text())
+            self.rep_and_main = float(self.ui.r_and_m_input.text()) / 100
         except ValueError:
             self.ui.r_and_m_auto.setText("0")
             #self.ui.tot_fixed_exp_auto.setText("0")
@@ -473,13 +562,13 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.total_fixed_expense, _ = REI_Calculations.fixed_expenses_monthly(
             self.electric, self.WandS, self.PMI,
             self.garbage, self.HOA, self.insurance,
-            self.taxes, self.other
+            self.taxes, self.other_fixed_expense
         )
         self.ui.tot_fixed_exp_auto.setText(str(self.total_fixed_expense))
         
     def cap_ex_input_changed(self):
         try:
-            self.cap_ex = float(self.ui.cap_ex_input.text())
+            self.cap_ex = float(self.ui.cap_ex_input.text()) / 100
         except ValueError:
             self.ui.cap_ex_auto.setText("0")
             return
@@ -492,7 +581,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     
     def vacancy_input_changed(self):
         try:
-            self.vacancy = float(self.ui.vacancy_input.text())
+            self.vacancy = float(self.ui.vacancy_input.text()) / 100
         except ValueError:
             self.ui.vacancy_auto.setText("0")
             return
@@ -505,7 +594,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     
     def other_income_month_changed(self):
         try:
-            self.other_income = float(
+            self.other_income_month = float(
                 self.ui.other_income_month_input.text()
                 .strip()
                 .replace("%", "")
@@ -515,32 +604,34 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.show_message("Wrong value for other income month", msg_type="warning")
 
     def downpayment_percent_changed(self, value):
-        self.downpayment = value
-        self.downpayment_dollar = REI_Calculations.calculate_dollar_amount(
-            self.purchase_price, self.downpayment
-        )
-        self.ui.dp_dollar_auto_2.setText(str(self.downpayment_dollar))                    
-        # recalculate loan
-        self.auto_loan_amount()        
+        self.calculate_downpayment_dollar()                   
+        self.calculate_loan_amount()    
         
-    def auto_loan_amount(self):
-        # loan amount auto calculation        
-        payment = REI_Calculations.full_loan_amount(
+    def calculate_downpayment_dollar(self):
+        self.downpayment_dollar = REI_Calculations.calculate_dollar_amount(
+            self.purchase_price, self.downpayment 
+        )
+        self.ui.dp_dollar_auto_2.setText(str(self.downpayment_dollar))          
+        
+    def calculate_loan_amount(self):
+        # loan amount auto calculation               
+        print(self.purchase_price, self.finance_rehab_logical, 
+              self.rehab_budget, self.downpayment_dollar)
+        self.loan_amount_auto = REI_Calculations.full_loan_amount(
             self.purchase_price, 
             self.finance_rehab_logical, 
             self.rehab_budget, 
-            self.downpayment_dollar / 100
+            self.downpayment_dollar 
         )
-        self.loan_amount_auto = payment
         self.ui.loan_amount_auto_2.setText(str(self.loan_amount_auto))
         
     def interest_rate_changed(self, value):
         self.int_rate = value        
-        #self.auto_loan_amount()
+        #self.calculate_loan_amount()
 
     def term_years_changed(self, value):
-        self.term = value        
-        #self.auto_loan_amount()
+        self.term = value / 100 
+        #self.calculate_loan_amount()
         
     def ave_rent_changed(self):
         try:
@@ -548,9 +639,9 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 self.ui.ave_rent_input.text().strip().replace("%", "").replace(",", ".")
             )
         except Exception as ex:
-            print(ex)
             self.show_message(
-                "Wrong value for average rent per unit", msg_type="warning"
+                message="Wrong value for average rent per unit", 
+                msg_type="warning"
             )
 
     def repair_and_maintenance_changed(self):
@@ -576,7 +667,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def generate_report(self):
         if not self.validate_values():
             return
-        self.init_fake_values()
+        #self.init_fake_values()
         
         self.run_calculations()
         if not self.data:
@@ -585,7 +676,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
         # dataframe for plotting three totals
         plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
-        print(plot_data)
                     
         data_output.generate_report(self.general_analysis_and_results, self.data, plot_data)
         
@@ -610,8 +700,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         ## Will then build a loop for the Pro forma statement.
 
         # Begin by calculating the monthly payment of the loan
-        try:
-            print(f'rate: {self.rate} term: {self.term}  present value: {self.present_value}')
+        try:            
             payment = REI_Calculations.loan_payment(self.rate, self.term, self.present_value)
         except Exception as ex:
             _, _, tb = sys.exc_info()

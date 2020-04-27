@@ -10,25 +10,22 @@ def loan_payment(rate, term, present_value):
 def calculate_dollar_amount(base_amount, percentage):
     # This function will be used for the "_auto" tags on the 
     # Expenses sheet, and the downpayment calculation on Purchase sheet
-    amount = base_amount * percentage
-    return amount
+    return base_amount * percentage
 
 def full_loan_amount(purchase_price_input, fin_rehab_logical, \
     rehab_budget_input, dp_dollar_auto):
     # this is to calculate the loan_amount_auto on the Purchase tab
     if fin_rehab_logical == "Yes":
         rehab_budget_input = 0
-    present_value = purchase_price_input + \
-        rehab_budget_input - dp_dollar_auto
-    return present_value
+    return purchase_price_input + \
+        rehab_budget_input - dp_dollar_auto    
 
-def Monthly_Rent(num_units_input, ave_rent_input):
+def monthly_rent(num_units_input, ave_rent_input):
     tot_rent_month_auto = num_units_input * ave_rent_input
-    return tot_rent_month_auto;
+    return tot_rent_month_auto
 
-def total_monthly_income(tot_rent_month_auto, \
-    other_income_month_input):
-    tot_income_month_auto = tot_income_month_auto + \
+def total_monthly_income(tot_rent_month_auto, other_income_month_input):
+    tot_income_month_auto = tot_rent_month_auto + \
         other_income_month_input
     return tot_income_month_auto
 

@@ -97,8 +97,9 @@ def ten_year_pro_forma_to_html(data):
 def create_report_html():
     html_template = (
         "<html>"
+        "<link href='bootstrap-4.4.1-dist/css/bootstrap.min.css' rel='stylesheet'>"
         "<body>"
-        "<div id='main_content'>"
+        "<div class='container'>"
         f"{logo_html}"
         "<h1>\"Property Address\" Report</h1>"
         "<br>"
@@ -116,8 +117,7 @@ def create_report_html():
     return html_template
 
 def analysis_and_results_to_html(values):
-    df = DataFrame(values, columns=['a', 'b', 'c'])   
-    
+    df = DataFrame(values, columns=['a', 'b', 'c'])       
     df['titles1'] = ['Cash to Close', 'Monthly Expenses', 'NOI', 'Cap Rate']
     df['titles2'] = ['Purchase Price', 'Monthly Cash Flow', 'NIAF', '1% Rule']
     df['titles3'] = ['Monthly Income', '50% Rule', 'Cash on Cash', 'Gross Rent Mult.']
@@ -126,6 +126,7 @@ def analysis_and_results_to_html(values):
     ordered_columns = ['titles1', 'a', 'titles2', 'b', 'titles3', 'c']
     df = df[ordered_columns]
     
+    # hide columns and index
     return df.to_html(header=None, index=False)
 
 

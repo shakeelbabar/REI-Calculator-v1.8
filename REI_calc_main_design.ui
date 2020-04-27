@@ -2320,7 +2320,7 @@
  <resources>
   <include location="SFI-white.qrc"/>
   <include location="SFI-white.qrc"/>
-  <include location="../../../../.designer/backup/SFI-white.qrc"/>
+  <include location="SFI-white.qrc"/>
  </resources>
  <connections/>
 </ui>
