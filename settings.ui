@@ -42,7 +42,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>Background color</string>
+    <string>Row background color</string>
    </property>
    <widget class="QLabel" name="special_row_bgcolor_label">
     <property name="geometry">

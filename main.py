@@ -2,11 +2,12 @@ from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
+import re
 from collections import defaultdict
 from random import randint
 from pandas import DataFrame
 
-from REI_calc_main_design import Ui_MainWindow
+from gui2 import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
 import REI_Calculations
 import data_output 
@@ -89,18 +90,17 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     state = ''
     zip_code = 0
     prior_year_taxes = 0
-    landlord_insurance = 0
+    landford_insurance = 0
     property_images = []
     
     # purchase information
     asking_price = 0
-    rate = 4.5 / 100
     term = 0
     present_value = 0
     arv = 0
     loan_amount_auto = 0
     int_rate = 4.5 / 100
-    downpayment = 20
+    downpayment = 20 / 100
     downpayment_dollar = 0
     purchase_price = 0
     rehab_budget = 0
@@ -134,17 +134,18 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
     # income
     total_income_monthly = 0
-    tot_monthly_income = 0
+    tot_rent_income = 0
     ave_rent = 0
     rental_income_monthly = 0
     num_units = 0
+    other_income = 0
     
     # assumptions 
     exp_appreciation = 0
     rent_appreciation = 0
     selling_costs = 0
     prop_appreciation = 0
-    other_income = 0
+
     
     
     def __init__(self):
@@ -153,7 +154,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.init_signals()
         self.init_validators()
-        #self.init_fake_values() # TODO: remove
+        self.init_fake_values() # TODO: remove
         
         # init data structures
         self.data = defaultdict(list)        
@@ -167,66 +168,35 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
     def init_fake_values(self):
         """ TODO: delete after testing"""
-        
-        self.address = '123 SFI Dr.'
-        self.city = 'Anytown'
-        self.state = 'AK'
-        self.zip_code = 12340
-        self.prior_year_taxes = 850
-        self.landlord_insurance = 750
+
+        self.ui.address_input.setText("123 SFI Dr.")
+        self.ui.city_input.setText("Anytown")
+        self.ui.zip_input.setText(str(12340))
+        self.ui.taxes_input.setText(str(500))
+        self.ui.annual_insurance_input.setText(str(230))
         self.property_images = []
-        
-        self.asking_price = 120000
-        self.rate = 4.5 / 100
-        self.term = 234
-        self.present_value = 40000
-        self.arv = 1
-        self.loan_amount_auto = 0
-        self.int_rate = 4.5 / 100
-        self.downpayment = 20
-        self.downpayment_dollar = 40000
-        self.purchase_price = 200000
-        self.rehab_budget = 50000
-        self.closing_costs = 3500
-        self.finance_rehab_logical = 'Yes'
-        self.emergency_fund = 5000
-        self.term_years = 30
-        
+
+        self.ui.asking_price_input.setText(str(0))
+        self.ui.purchase_price_input.setText(str(200000))
+        self.ui.arv_input.setText(str(325000))
+        self.ui.purchase_price_input.setText(str(200000))
+        self.ui.rehab_budget_input.setText(str(50000))
+        self.ui.closing_costs_input.setText(str(3500))
+        self.ui.emerg_fund_input.setText(str(5000))
+
         # fixed expenses
-        self.total_fixed_expense = 253.33
-        self.electric = 30
-        self.WandS = 10
-        self.PMI = 20
-        self.garbage = 20
-        self.HOA = 20
-        self.insurance = 20
-        self.taxes = 20
-        self.other_variable_expense = 20
-        
+
         # variable expenses
-        self.other_fixed_expense = 20
-        self.total_variable_expense = 1200
-        self.vacancy = 210 / 100
-        self.vacancy_dollar = 20
-        self.rep_and_main = 10 / 100
-        self.rep_and_main_dollar = 110
-        self.cap_ex = 30 / 100
-        self.cap_ex_dollar = 4
-        self.management = 6 / 100
-        self.management_dollar = 60
 
         # income
-        self.total_income_monthly = 1300
-        self.other_income_month = 1300
-        self.ave_rent = 1200
-        self.rental_income_monthly = 120
-        self.num_units = 1
-        
-        # assumptions 
-        self.exp_appreciation = 20 / 100
-        self.rent_appreciation = 30 / 100
-        self.selling_costs = 40 / 100
-        self.prop_appreciation = 50 / 100
+        self.ui.other_income_month_input.setText(str(1300))
+        self.ui.ave_rent_input.setText(str(1200))
+
+        # assumptions
+        self.ui.rent_appreciation_input.setText(str(20 / 100))
+        self.ui.exp_appreciation_input.setText(str(30 / 100))
+        self.ui.prop_appreciation_input.setText(str(40 / 100))
+        self.ui.selling_costs_input.setText(str(50 / 100))
         
     def validate_values(self):
         try:
@@ -235,57 +205,136 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.city = self.ui.city_input.text()
             self.state = self.ui.state_input.currentText()            
             self.zip_code = int(self.ui.zip_input.text())
-            self.prior_year_taxes = float(self.ui.taxes_input.text())
-            self.landlord_insurance = float(self.ui.annual_insurance_input.text())
+            self.prior_year_taxes = float(self.formatted_currency_to_float(
+                self.ui.taxes_input.text()
+            ))
+            self.landford_insurance = float(self.formatted_currency_to_float(
+                self.ui.annual_insurance_input.text()
+            ))
             
-            self.rate = self.ui.int_rate_input_2.value()
+            self.int_rate = self.ui.int_rate_input_2.value()
 
             # purchase information tab inputs
-            self.asking_price = float(self.ui.asking_price_input.text())
-            self.purchase_price = float(self.ui.purchase_price_input.text())
-            self.finance_rehab_logical = self.ui.fin_rehab_logical.currentText()
-            self.rehab_budget = float(self.ui.rehab_budget_input.text())
-            self.arv = float(self.ui.arv_input.text())
-            self.closing_costs = float(self.ui.closing_costs_input.text())
-            self.emergency_fund = float(self.ui.emerg_fund_input.text())
-            self.downpayment = float(self.ui.downpayment_percentage_input_2.value())
-            self.downpayment_dollar = float(self.ui.dp_dollar_auto_2.text())
-            self.loan_amount = float(self.ui.loan_amount_auto_2.text())
+            self.asking_price = float(self.formatted_currency_to_float(
+                self.ui.asking_price_input.text()
+            ))
+            self.purchase_price = float(self.formatted_currency_to_float(
+                self.ui.purchase_price_input.text()
+            ))
+            self.finance_rehab_logical = self.formatted_currency_to_float(
+                self.ui.fin_rehab_logical.currentText()
+            )
+            self.rehab_budget = float(self.formatted_currency_to_float(
+                self.ui.rehab_budget_input.text()
+            ))
+            self.arv = float(self.formatted_currency_to_float(
+                self.ui.arv_input.text()
+            ))
+            self.closing_costs = float(self.formatted_currency_to_float(
+                self.ui.closing_costs_input.text()
+            ))
+            self.emergency_fund = float(self.formatted_currency_to_float(
+                self.ui.emerg_fund_input.text()
+            ))
+            self.downpayment = float(self.percent_to_float(
+                self.ui.downpayment_percentage_input_2.value() / 100
+            ))
+            self.downpayment_dollar = float(self.formatted_currency_to_float(
+                self.ui.dp_dollar_auto_2.text()
+            ))
+            self.loan_amount = float(self.formatted_currency_to_float(
+                self.ui.loan_amount_auto_2.text()
+            ))
             self.term = self.ui.term_input_2.value()
+            self.int_rate = self.formatted_currency_to_float(
+                self.ui.int_rate_input_2.text()
+            )
+            self.int_rate = float(self.int_rate) / 100
             
             # income tab inputs
             self.num_units = float(self.ui.num_units_input.value())
-            self.ave_rent = float(self.ui.ave_rent_input.text())
-            self.tot_monthly_income = float(self.ui.tot_rent_month_auto.text())
-            self.other_income_month = float(self.ui.other_income_month_input.text())
-            self.total_income_monthly = float(self.ui.tot_income_month_auto.text())
+            self.ave_rent = float(self.formatted_currency_to_float(
+                self.ui.ave_rent_input.text()
+            ))
+            self.tot_rent_income = float(self.formatted_currency_to_float(
+                self.ui.tot_rent_month_auto.text()
+            ))
+            self.other_income = float(self.formatted_currency_to_float(
+                self.ui.other_income_month_input.text()
+            ))
+            self.total_income_monthly = float(self.formatted_currency_to_float(
+                self.ui.tot_income_month_auto.text()
+            ))
             
             # expenses tab inputs
-            self.total_fixed_expense = float(self.ui.tot_fixed_exp_auto.text())
-            self.electric = float(self.ui.electric_input.text())
-            self.WandS = float(self.ui.w_and_s_input.text())
-            self.PMI = float(self.ui.pmi_input.text())
-            self.garbage = float(self.ui.garbage_input.text())
-            self.HOA = float(self.ui.hoa_input.text())
-            self.taxes = float(self.ui.monthly_taxes_auto.text())
-            self.insurance = float(self.ui.insurance_auto.text())
-            self.other = float(self.ui.other_input.text())
-            self.total_variable_expense = float(self.ui.tot_var_exp_auto.text())
-            self.rep_and_main = float(self.ui.r_and_m_input.text())
-            self.rep_and_main_dollar= float(self.ui.r_and_m_auto.text())
-            self.rep_and_main_dollar= float(self.ui.r_and_m_auto.text())
-            self.cap_ex = float(self.ui.cap_ex_input.text())
-            self.cap_ex_dollar = float(self.ui.cap_ex_auto.text())
-            self.vacancy = float(self.ui.vacancy_auto.text())
-            self.vacancy_dollar = float(self.ui.vacancy_input.text())
-            self.management = float(self.ui.manag_input.text())
-            self.management_dollar = float(self.ui.manag_auto.text())
+            self.total_fixed_expense = float(self.formatted_currency_to_float(
+                self.ui.tot_fixed_exp_auto.text()
+            ))
+            self.electric = float(self.formatted_currency_to_float(
+                self.ui.electric_input.text()
+            ))
+            self.WandS = float(self.formatted_currency_to_float(
+                self.ui.w_and_s_input.text()
+            ))
+            self.PMI = float(self.formatted_currency_to_float(
+                self.ui.pmi_input.text()
+            ))
+            self.garbage = float(self.formatted_currency_to_float(
+                self.ui.garbage_input.text()
+            ))
+            self.HOA = float(self.formatted_currency_to_float(
+                self.ui.hoa_input.text()
+            ))
+            self.taxes = float(self.formatted_currency_to_float(
+                self.ui.monthly_taxes_auto.text()
+            ))
+            self.insurance = float(self.formatted_currency_to_float(
+                self.ui.insurance_auto.text()
+            ))
+            self.other_fixed_expense = float(self.formatted_currency_to_float(
+                self.ui.other_input.text()
+            ))
+            self.total_variable_expense = float(self.formatted_currency_to_float(
+                self.ui.tot_var_exp_auto.text()
+            ))
+            self.rep_and_main = float(self.percent_to_float(
+                self.ui.r_and_m_input.text()
+            )) / 100
+            self.rep_and_main_dollar = float(self.formatted_currency_to_float(
+                self.ui.r_and_m_auto.text()
+            ))
+            self.cap_ex = float(self.percent_to_float(
+                self.ui.cap_ex_input.text()
+            )) / 100
+            self.cap_ex_dollar = float(self.formatted_currency_to_float(
+                self.ui.cap_ex_auto.text()
+            ))
+            self.vacancy = float(self.percent_to_float(
+                self.ui.vacancy_input.text()
+            )) / 100
+            self.vacancy_dollar = float(self.formatted_currency_to_float(
+                self.ui.vacancy_auto.text()
+            ))
+            self.management = float(self.percent_to_float(
+                self.ui.manag_input.text()
+            )) / 100
+            self.management_dollar = float(self.formatted_currency_to_float(
+                self.ui.manag_auto.text()
+            ))
             
             # Assumptions tab inputs
-            self.rent_appreciation = float(self.ui.rent_appreciation_input.text()) / 100
-            self.exp_appreciation = float(self.ui.exp_appreciation_input.text()) / 100
-            self.prop_appreciation = float(self.ui.prop_appreciation_input.text()) / 100
-            self.selling_costs = float(self.ui.selling_costs_input.text()) / 100
+            self.rent_appreciation = float(
+                self.percent_to_float(self.ui.rent_appreciation_input.text())
+            ) / 100
+            self.exp_appreciation = float(
+                self.percent_to_float(self.ui.exp_appreciation_input.text())
+            ) / 100
+            self.prop_appreciation = float(
+                self.percent_to_float(self.ui.prop_appreciation_input.text())
+            ) / 100
+            self.selling_costs = float(
+                self.percent_to_float(self.ui.selling_costs_input.text())
+            ) / 100
             
         except Exception as ex:
             _, _, tb = sys.exc_info()
@@ -296,15 +345,66 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
         return True
 
+    def loadFile(self):
+        import PyQt5
+        options = PyQt5.QtWidgets.QFileDialog.Options()
+        options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName, _ = PyQt5.QtWidgets.QFileDialog.getOpenFileName(None, "Open file", "",
+                                                                  "All files (*.*)", options=options)
+        if fileName:
+            print(fileName)
+            
+    def saveFile(self):
+        import PyQt5
+        options = PyQt5.QtWidgets.QFileDialog.Options()
+        options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName, _ = PyQt5.QtWidgets.QFileDialog.getSaveFileName(None, "Save file", "",
+                                                                  "All files (*.*)", options=options)
+        if fileName:
+            print(fileName)
+            
+    def exit(self):
+        exit(1)
+        
+    def showAbout(self):
+        from about import Ui_Dialog
+        Dialog = QtWidgets.QDialog()
+        ui = Ui_Dialog()
+        ui.setupUi(Dialog)
+        Dialog.show()
+                
+    def focused_field(self, ui_control, ftype='dollar'):
+        if ftype == 'dollar':
+            self.set_decimal_format(ui_control)
+        elif ftype == 'percent':
+            self.set_single_float_format(ui_control)
+        
+    def unfocused_field(self, ui_control, ftype='dollar'):
+        if ftype == 'dollar':
+            self.set_currency_format(ui_control)
+        elif ftype == 'percent':
+            self.set_percent_format(ui_control)
+            
+    def set_single_float_format(self, ui_control):
+        value = self.percent_to_float(ui_control.text())
+        ui_control.setText(value)
+        
     def init_signals(self):
+        self.ui.annual_insurance_input.focused.connect(
+            lambda uic=self.ui.annual_insurance_input: self.focused_field(uic)
+        )
+        self.ui.annual_insurance_input.unfocused.connect(
+            lambda uic=self.ui.annual_insurance_input: self.unfocused_field(uic)
+        )
         self.ui.Generate_Report.clicked.connect(self.generate_report)
         self.ui.actionSettings.triggered.connect(self.settings_window)
-                
+        self.ui.actionLoad.triggered.connect(self.loadFile)
+        self.ui.actionSave.triggered.connect(self.saveFile)
+        self.ui.actionSave_As.triggered.connect(self.saveFile)
+        self.ui.actionExit.triggered.connect(self.exit)
+        self.ui.actionAbout_REI_Calculator.triggered.connect(self.showAbout)
         # auto fields
-        self.ui.r_and_m_input.editingFinished.connect(
-            self.repair_and_maintenance_changed
-        )
-        self.ui.cap_ex_input.editingFinished.connect(self.cap_ex_changed)
+        
         self.ui.ave_rent_input.editingFinished.connect(self.ave_rent_changed)
         self.ui.other_income_month_input.editingFinished.connect(
             self.other_income_month_changed
@@ -313,36 +413,203 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.term_input_2.valueChanged.connect(self.term_years_changed)
         
         # calculate downpayment $ when downpayment % is changed
-        self.ui.downpayment_percentage_input_2.valueChanged.connect(self.downpayment_percent_changed)      
+        self.ui.downpayment_percentage_input_2.valueChanged.connect(
+            self.downpayment_percent_changed)      
         
         # expenses tab auto fields
-        self.ui.vacancy_input.textChanged.connect(self.vacancy_input_changed)       
-        self.ui.cap_ex_input.textChanged.connect(self.cap_ex_input_changed)       
-        self.ui.r_and_m_input.textChanged.connect(self.r_and_m_input_changed)       
-        self.ui.manag_input.textChanged.connect(self.manag_input_changed)       
-        self.ui.electric_input.textChanged.connect(self.electric_input_changed)       
-        self.ui.w_and_s_input.textChanged.connect(self.w_and_s_input_changed)       
-        self.ui.pmi_input.textChanged.connect(self.pmi_input_changed)       
-        self.ui.garbage_input.textChanged.connect(self.garbage_input_changed)       
-        self.ui.hoa_input.textChanged.connect(self.hoa_input_changed)       
-        self.ui.other_input.textChanged.connect(self.other_input_changed)
+        self.ui.vacancy_input.textChanged.connect(self.vacancy_input_changed)    
+        self.ui.vacancy_input.focused.connect(
+            lambda uic=self.ui.vacancy_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.vacancy_input.unfocused.connect(
+            lambda uic=self.ui.vacancy_input: self.unfocused_field(uic, 'percent')
+        )    
+                
+        self.ui.cap_ex_input.textChanged.connect(self.cap_ex_input_changed)     
+        self.ui.cap_ex_input.focused.connect(
+            lambda uic=self.ui.cap_ex_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.cap_ex_input.unfocused.connect(
+            lambda uic=self.ui.cap_ex_input: self.unfocused_field(uic, 'percent')
+        )    
         
+        self.ui.r_and_m_input.textChanged.connect(self.r_and_m_input_changed)   
+        self.ui.r_and_m_input.focused.connect(
+            lambda uic=self.ui.r_and_m_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.r_and_m_input.unfocused.connect(
+            lambda uic=self.ui.r_and_m_input: self.unfocused_field(uic, 'percent')
+        )           
+                
+        self.ui.manag_input.textChanged.connect(self.manag_input_changed)       
+        self.ui.manag_input.focused.connect(
+            lambda uic=self.ui.manag_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.manag_input.unfocused.connect(
+            lambda uic=self.ui.manag_input: self.unfocused_field(uic, 'percent')
+        )   
+        
+        self.ui.electric_input.textChanged.connect(self.electric_input_changed)   
+        self.ui.electric_input.focused.connect(
+            lambda uic=self.ui.electric_input: self.focused_field(uic)
+        )
+        self.ui.electric_input.unfocused.connect(
+            lambda uic=self.ui.electric_input: self.unfocused_field(uic)
+        )           
+        
+        self.ui.w_and_s_input.textChanged.connect(self.w_and_s_input_changed)     
+        self.ui.w_and_s_input.focused.connect(
+            lambda uic=self.ui.w_and_s_input: self.focused_field(uic)
+        )
+        self.ui.w_and_s_input.unfocused.connect(
+            lambda uic=self.ui.w_and_s_input: self.unfocused_field(uic)
+        )     
+        
+        self.ui.pmi_input.textChanged.connect(self.pmi_input_changed)  
+        self.ui.pmi_input.focused.connect(
+            lambda uic=self.ui.pmi_input: self.focused_field(uic)
+        )
+        self.ui.pmi_input.unfocused.connect(
+            lambda uic=self.ui.pmi_input: self.unfocused_field(uic)
+        )   
+        
+        self.ui.garbage_input.textChanged.connect(self.garbage_input_changed)    
+        self.ui.garbage_input.focused.connect(
+            lambda uic=self.ui.garbage_input: self.focused_field(uic)
+        )
+        self.ui.garbage_input.unfocused.connect(
+            lambda uic=self.ui.garbage_input: self.unfocused_field(uic)
+        )   
+        
+        self.ui.hoa_input.textChanged.connect(self.hoa_input_changed)       
+        self.ui.hoa_input.focused.connect(
+            lambda uic=self.ui.hoa_input: self.focused_field(uic)
+        )
+        self.ui.hoa_input.unfocused.connect(
+            lambda uic=self.ui.hoa_input: self.unfocused_field(uic)
+        )   
+        
+        self.ui.other_input.textChanged.connect(self.other_input_changed)
+        self.ui.other_input.focused.connect(
+            lambda uic=self.ui.other_input: self.focused_field(uic)
+        )
+        self.ui.other_input.unfocused.connect(
+            lambda uic=self.ui.other_input: self.unfocused_field(uic)
+        )   
+        
+        self.ui.r_and_m_input.editingFinished.connect(
+            self.repair_and_maintenance_changed
+        )
+        
+        self.ui.cap_ex_input.editingFinished.connect(self.cap_ex_changed)
+
         # property tab
-        self.ui.annual_insurance_input.textChanged.connect(self.annual_insurance_input_changed)
+        self.ui.annual_insurance_input.textChanged.connect(
+            self.annual_insurance_input_changed
+        )
+        self.ui.annual_insurance_input.focused.connect(
+            lambda uic=self.ui.annual_insurance_input: self.focused_field(uic)
+        )
+        self.ui.annual_insurance_input.unfocused.connect(
+            lambda uic=self.ui.annual_insurance_input: self.unfocused_field(uic)
+        )
+        
         self.ui.taxes_input.textChanged.connect(self.taxes_input_changed)
+        self.ui.taxes_input.focused.connect(
+            lambda uic=self.ui.taxes_input: self.focused_field(uic)
+        )
+        self.ui.taxes_input.unfocused.connect(
+            lambda uic=self.ui.taxes_input: self.unfocused_field(uic)
+        )
         
         # income tab
         self.ui.num_units_input.valueChanged.connect(self.num_units_value_changed)
         self.ui.ave_rent_input.textChanged.connect(self.ave_rent_input_changed)
+        self.ui.ave_rent_input.focused.connect(
+            lambda uic=self.ui.ave_rent_input: self.focused_field(uic)
+        )
+        self.ui.ave_rent_input.unfocused.connect(
+            lambda uic=self.ui.ave_rent_input: self.unfocused_field(uic)
+        )    
+        
         self.ui.other_income_month_input.textChanged.connect(self.other_income_month_input_changed)
+        self.ui.other_income_month_input.focused.connect(
+            lambda uic=self.ui.other_income_month_input: self.focused_field(uic)
+        )
+        self.ui.other_income_month_input.unfocused.connect(
+            lambda uic=self.ui.other_income_month_input: self.unfocused_field(uic)
+        )          
+        
+        # Purchase Tab
         self.ui.purchase_price_input.textChanged.connect(self.purchase_price_changed)
+        self.ui.purchase_price_input.focused.connect(
+            lambda uic=self.ui.purchase_price_input: self.focused_field(uic)
+        )
+        self.ui.purchase_price_input.unfocused.connect(
+            lambda uic=self.ui.purchase_price_input: self.unfocused_field(uic)
+        )
+                
         self.ui.rehab_budget_input.textChanged.connect(self.rehab_budget_changed)
+        self.ui.rehab_budget_input.focused.connect(
+            lambda uic=self.ui.rehab_budget_input: self.focused_field(uic)
+        )
+        self.ui.rehab_budget_input.unfocused.connect(
+            lambda uic=self.ui.rehab_budget_input: self.unfocused_field(uic)
+        )        
+        
         self.ui.arv_input.textChanged.connect(self.arv_changed)
+        self.ui.arv_input.focused.connect(
+            lambda uic=self.ui.arv_input: self.focused_field(uic)
+        )
+        self.ui.arv_input.unfocused.connect(
+            lambda uic=self.ui.arv_input: self.unfocused_field(uic)
+        )        
+        
+        
         self.ui.closing_costs_input.textChanged.connect(self.closing_costs_changed)
+        self.ui.closing_costs_input.focused.connect(
+            lambda uic=self.ui.closing_costs_input: self.focused_field(uic)
+        )
+        self.ui.closing_costs_input.unfocused.connect(
+            lambda uic=self.ui.closing_costs_input: self.unfocused_field(uic)
+        )         
+        
         self.ui.emerg_fund_input.textChanged.connect(self.emerg_fund_input)
+        self.ui.emerg_fund_input.focused.connect(
+            lambda uic=self.ui.emerg_fund_input: self.focused_field(uic)
+        )
+        self.ui.emerg_fund_input.unfocused.connect(
+            lambda uic=self.ui.emerg_fund_input: self.unfocused_field(uic)
+        )    
+        
         self.ui.fin_rehab_logical.currentIndexChanged.connect(
             self.fin_rehab_logical_changed
         )
+        
+        self.ui.rent_appreciation_input.focused.connect(
+            lambda uic=self.ui.rent_appreciation_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.rent_appreciation_input.unfocused.connect(
+            lambda uic=self.ui.rent_appreciation_input: self.unfocused_field(uic, 'percent')
+        )   
+        self.ui.exp_appreciation_input.focused.connect(
+            lambda uic=self.ui.exp_appreciation_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.exp_appreciation_input.unfocused.connect(
+            lambda uic=self.ui.exp_appreciation_input: self.unfocused_field(uic, 'percent')
+        )      
+        self.ui.prop_appreciation_input.focused.connect(
+            lambda uic=self.ui.prop_appreciation_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.prop_appreciation_input.unfocused.connect(
+            lambda uic=self.ui.prop_appreciation_input: self.unfocused_field(uic, 'percent')
+        )     
+        self.ui.selling_costs_input.focused.connect(
+            lambda uic=self.ui.selling_costs_input: self.focused_field(uic, 'percent')
+        )
+        self.ui.selling_costs_input.unfocused.connect(
+            lambda uic=self.ui.selling_costs_input: self.unfocused_field(uic, 'percent')
+        )             
         
 
     def init_validators(self):
@@ -374,117 +641,275 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def settings_window(self):
         settings_dialog = SettingsWindow(self)
         settings_dialog.show()
+        
+    def set_percent_format(self, ui_control):
+        try:
+            value = self.percent_to_float(
+                ui_control.text()
+            )
+            percent_format = '{:0,.2f}%'.format(float(value))         
+            ui_control.setText(percent_format)
+        except Exception as ex:
+            print('set_percent_format:', ex)
+            ui_control.setText('0%')
+        
+    def set_currency_format(self, ui_control):
+        if not ui_control.text().strip():
+            return
+        
+        try:            
+            current_value = self.formatted_currency_to_float(ui_control.text())
+            current_value = float(current_value)
+            currency_format = '${:0,.2f}'.format(float(current_value)) 
+            ui_control.setText(str(currency_format))
+        except Exception as ex:
+            print('set_currency_format:', ex)
+            ui_control.setText('')
+        
+    def set_decimal_format(self, ui_control):
+        if not ui_control.text().strip():
+            return
+        
+        try:
+            current_value = ui_control.text()            
+            decimal_float = self.formatted_currency_to_float(current_value)
+            ui_control.setText(decimal_float)
+        except Exception as ex:
+            print('set_decimal_format:', ex)
+            ui_control.setText('0')       
+       
     
     def fin_rehab_logical_changed(self, index):
         self.finance_rehab_logical = self.ui.fin_rehab_logical.currentText()
-   
+        self.calculate_loan_amount()
+        
+        self.set_currency_format(self.ui.loan_amount_auto_2)
+        
+    def annual_insurance_input_edited(self):
+        self.set_decimal_format(self.ui.annual_insurance_input)
+
+    def annual_insurance_input_finished(self):
+        self.set_currency_format(self.ui.annual_insurance_input)
+            
     def emerg_fund_input(self):
         try:
-            self.emergency_fund = float(self.ui.emerg_fund_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.emerg_fund_input.text()
+            )            
+            self.emergency_fund = float(value)
         except ValueError:
             self.ui.emerg_fund_input.setText("0")
     
     def closing_costs_changed(self):
         try:
-            self.closing_costs = float(self.ui.closing_costs_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.closing_costs_input.text()
+            )            
+            self.closing_costs = float(value)
         except ValueError:
             self.ui.closing_costs_input.setText("0")
     
     def arv_changed(self):
         try:
-            self.arv = float(self.ui.arv_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.arv_input.text()
+            )            
+            self.arv = float(value)
         except ValueError:
             self.ui.arv_input.setText("0")
     
     def rehab_budget_changed(self):
         try:
-            self.rehab_budget = float(self.ui.rehab_budget_input.text())
-            print('rehab. budget:', self.rehab_budget)
+            value = self.formatted_currency_to_float(
+                self.ui.rehab_budget_input.text()
+            )
+            self.rehab_budget = float(value)   
             self.calculate_loan_amount()
+            
+            self.set_currency_format(self.ui.loan_amount_auto_2)
         except ValueError:
             self.ui.rehab_budget_input.setText("0")
     
     def purchase_price_changed(self):
         try:
-            self.purchase_price = float(self.ui.purchase_price_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.purchase_price_input.text()
+            )
+            self.purchase_price = float(value)#self.ui.purchase_price_input.text())
             self.calculate_downpayment_dollar()
             self.calculate_loan_amount()
+            
+            self.set_currency_format(self.ui.dp_dollar_auto_2)
+            self.set_currency_format(self.ui.loan_amount_auto_2)
         except ValueError:
             self.ui.purchase_price_input.setText("0")
         
     def other_income_month_input_changed(self):
         try:
+            value = self.formatted_currency_to_float(
+                self.ui.other_income_month_input.text()
+            )
+            
+            self.other_income = float(value)
+            value = self.formatted_currency_to_float(
+                self.ui.tot_rent_month_auto.text()
+            )
+            
+            self.rent_income  = float(value)
             self.total_income_monthly = REI_Calculations.total_monthly_income(
-                self.rental_income_monthly, 
-                self.other_income_month
+                self.rent_income, 
+                self.other_income
             )
             self.ui.tot_income_month_auto.setText(str(self.total_income_monthly))
-        except ValueError:
-            self.ui.ave_rent_input.setText("0")
-            return
+            self.set_currency_format(self.ui.tot_income_month_auto)
+            
+        except ValueError as ex:
+            print("other income month changed:", ex)
+            self.total_income_monthly = 0
+            self.ui.other_income_month_input.setText("0")
+
     
     def ave_rent_input_changed(self):
         try:
-            self.ave_rent = int(self.ui.ave_rent_input.text())
-            self.total_income_monthly = REI_Calculations.monthly_rent(self.num_units, self.ave_rent)
+            value = self.formatted_currency_to_float(
+                self.ui.num_units_input.text()
+            )
+            
+            self.num_units = int(value)
+            
+            value = self.formatted_currency_to_float(
+                self.ui.ave_rent_input.text()
+            )
+            
+            self.ave_rent = float(value)
+            self.total_rent_monthly = REI_Calculations.monthly_rent(
+                self.num_units, 
+                self.ave_rent
+            )
+            self.ui.tot_rent_month_auto.setText(str(self.total_rent_monthly))
+            self.set_currency_format(self.ui.tot_rent_month_auto)
+
+            # Update total monthly income
+            try:
+                value = self.formatted_currency_to_float(
+                    self.ui.other_income_month_input.text()
+                )
+                self.other_income = float(value)
+            except ValueError:
+                self.ui.other_income_month_input.setText("0")
+                return
+
+            self.total_income_monthly = REI_Calculations.total_monthly_income(
+                self.total_rent_monthly,
+                self.other_income
+            )
             self.ui.tot_income_month_auto.setText(str(self.total_income_monthly))
+            self.set_currency_format(self.ui.tot_income_month_auto)
+            
         except ValueError:
             self.ui.ave_rent_input.setText("0")
             return
     
     def num_units_value_changed(self, value):
         try:
-            self.num_units = value #int(self.ui.num_units_input.text())
+            self.num_units = value 
             self.rental_income_monthly = REI_Calculations.monthly_rent(
                 self.num_units, self.ave_rent
             )
             self.ui.tot_rent_month_auto.setText(str(self.rental_income_monthly))
+            self.set_currency_format(self.ui.tot_rent_month_auto)
+            
+            # Update total monthly income
+            try:
+                value = self.formatted_currency_to_float(
+                    self.ui.other_income_month_input.text()
+                )                
+                self.other_income = float(value)
+            except ValueError:
+                self.ui.other_income_month_input.setText("0")
+            
+            try:
+                value = self.formatted_currency_to_float(
+                    self.ui.tot_rent_month_auto.text()
+                )                
+                self.rent_income = float(value)
+            except ValueError:
+                self.ui.ave_rent_input.setText("0")
+            
+            self.total_income_monthly = REI_Calculations.total_monthly_income(
+                self.rent_income,
+                self.other_income
+            )
+            self.ui.tot_income_month_auto.setText(str(self.total_income_monthly))
+            self.set_currency_format(self.ui.tot_income_month_auto)
         except ValueError as ex:            
             print('num_units_input_changed:', str(ex))
             return
         
         self.ui.monthly_taxes_auto.setText(str(self.taxes))
+        self.set_currency_format(self.ui.monthly_taxes_auto)
+        
         self.update_total_exp_auto()
-    
+            
     def taxes_input_changed(self):
         try:
-            self.taxes = float(self.ui.taxes_input.text()) / 12            
+            value = self.formatted_currency_to_float(
+                self.ui.taxes_input.text()
+            )
+            self.taxes = float(value) / 12            
         except ValueError:
             self.ui.taxes_input.setText("0")
-            return
         
         self.ui.monthly_taxes_auto.setText(str(self.taxes))
         self.update_total_exp_auto()
+        self.set_currency_format(self.ui.monthly_taxes_auto)
         
     def annual_insurance_input_changed(self):
         try:
-            self.insurance = float(self.ui.annual_insurance_input.text()) / 12            
+            value = self.formatted_currency_to_float(
+                self.ui.annual_insurance_input.text()
+            )
+            self.insurance = float(value) / 12            
         except ValueError:
             self.ui.insurance_auto.setText("0")
-            return
         
         self.ui.insurance_auto.setText(str(self.insurance))
         self.update_total_exp_auto()
+        self.set_currency_format(self.ui.insurance_auto)
+        
     
     def other_input_changed(self):
         try:
-            self.other = float(self.ui.other_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.other_input.text()
+            )
+            self.other_fixed_expense = float(value)
         except ValueError:
             self.ui.other_input.setText("0")
         
         self.update_total_exp_auto()
+        self.set_currency_format(self.ui.other_input)
 
     def garbage_input_changed(self):
         try:
-            self.garbage = float(self.ui.garbage_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.garbage_input.text()
+            )            
+            self.garbage = float(value)
         except ValueError:
             self.ui.garbage_input.setText("0")
         
         self.update_total_exp_auto()
+        self.set_currency_format(self.ui.garbage_input)
 
     def hoa_input_changed(self):
         try:
-            self.HOA = float(self.ui.hoa_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.hoa_input.text()
+            )
+            
+            value = self.formatted_currency_to_float(value)
+            self.HOA = float(value)
         except ValueError:
             self.ui.hoa_input.setText("0")
         
@@ -492,7 +917,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
     def pmi_input_changed(self):
         try:
-            self.PMI = float(self.ui.pmi_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.pmi_input.text()
+            )
+            self.PMI = float(value)
         except ValueError:
             self.ui.pmi_input.setText("0")
         
@@ -500,7 +928,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
     def w_and_s_input_changed(self):
         try:
-            self.WandS = float(self.ui.w_and_s_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.w_and_s_input.text()
+            )
+            
+            self.WandS = float(value)
         except ValueError:
             self.ui.w_and_s_input.setText("0")
         
@@ -508,42 +940,35 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
     def electric_input_changed(self):
         try:
-            self.electric = float(self.ui.electric_input.text())
+            value = self.formatted_currency_to_float(
+                self.ui.electric_input.text()
+            )
+            
+            self.electric = float(value)
         except ValueError:
             self.ui.electric_input.setText("0")
         
         self.update_total_exp_auto()
         
-    def manag_input_changed(self):
-        try:
-            self.management = float(self.ui.manag_input.text()) / 100
-        except ValueError:
-            self.ui.manag_auto.setText("0")
-            self.ui.tot_fixed_exp_auto.setText("0")
-            self.ui.tot_var_exp_auto.setText("0")            
-            return
-        
-        self.management_dollar = REI_Calculations.calculate_dollar_amount(
-            self.total_income_monthly,
-            self.management
-        )
-        self.ui.manag_auto.setText(str(self.management))
-        
     def r_and_m_input_changed(self):
         """Repair and maintenance"""
         try:
-            self.rep_and_main = float(self.ui.r_and_m_input.text()) / 100
-        except ValueError:
+            value = self.percent_to_float(
+                self.ui.r_and_m_input.text()
+            )            
+            self.rep_and_main = float(value) / 100
+        except ValueError as ex:
+            print('r_and_m_input_changed', ex)
             self.ui.r_and_m_auto.setText("0")
-            #self.ui.tot_fixed_exp_auto.setText("0")
-            self.ui.tot_var_exp_auto.setText("0")
-            return
+            #self.ui.tot_var_exp_auto.setText("0")
         
         self.rep_and_main_dollar = REI_Calculations.calculate_dollar_amount(
             self.total_income_monthly,
             self.rep_and_main
         )
         self.ui.r_and_m_auto.setText(str(self.rep_and_main_dollar))
+        self.set_currency_format(self.ui.r_and_m_auto)
+        
         # update total (fixed, variable) expenses
         self.update_total_exp_auto()
         
@@ -551,13 +976,13 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         """Update total expenses (fixed and variable)
         """
         self.total_variable_expense, _ = REI_Calculations.variable_expenses_monthly(
-            self.total_income_monthly,
             self.rep_and_main_dollar,
             self.cap_ex_dollar,
             self.vacancy_dollar,
             self.management_dollar
         )
         self.ui.tot_var_exp_auto.setText(str(self.total_variable_expense))
+        self.set_currency_format(self.ui.tot_var_exp_auto)
         
         self.total_fixed_expense, _ = REI_Calculations.fixed_expenses_monthly(
             self.electric, self.WandS, self.PMI,
@@ -565,33 +990,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.taxes, self.other_fixed_expense
         )
         self.ui.tot_fixed_exp_auto.setText(str(self.total_fixed_expense))
+        self.set_currency_format(self.ui.tot_fixed_exp_auto)
         
-    def cap_ex_input_changed(self):
-        try:
-            self.cap_ex = float(self.ui.cap_ex_input.text()) / 100
-        except ValueError:
-            self.ui.cap_ex_auto.setText("0")
-            return
-        
-        self.cap_ex_dollar = REI_Calculations.calculate_dollar_amount(
-            self.total_income_monthly,
-            self.cap_ex
-        )
-        self.ui.cap_ex_auto.setText(str(self.cap_ex_dollar))
-    
-    def vacancy_input_changed(self):
-        try:
-            self.vacancy = float(self.ui.vacancy_input.text()) / 100
-        except ValueError:
-            self.ui.vacancy_auto.setText("0")
-            return
-        
-        self.vacancy_dollar = REI_Calculations.calculate_dollar_amount(
-            self.total_income_monthly, 
-            self.vacancy
-        )
-        self.ui.vacancy_auto.setText(str(self.vacancy_dollar))
-    
     def other_income_month_changed(self):
         try:
             self.other_income_month = float(
@@ -604,19 +1004,18 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.show_message("Wrong value for other income month", msg_type="warning")
 
     def downpayment_percent_changed(self, value):
+        self.downpayment = value / 100
         self.calculate_downpayment_dollar()                   
         self.calculate_loan_amount()    
         
-    def calculate_downpayment_dollar(self):
+    def calculate_downpayment_dollar(self):        
         self.downpayment_dollar = REI_Calculations.calculate_dollar_amount(
             self.purchase_price, self.downpayment 
         )
         self.ui.dp_dollar_auto_2.setText(str(self.downpayment_dollar))          
         
     def calculate_loan_amount(self):
-        # loan amount auto calculation               
-        print(self.purchase_price, self.finance_rehab_logical, 
-              self.rehab_budget, self.downpayment_dollar)
+        # loan amount auto calculation            
         self.loan_amount_auto = REI_Calculations.full_loan_amount(
             self.purchase_price, 
             self.finance_rehab_logical, 
@@ -626,11 +1025,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.loan_amount_auto_2.setText(str(self.loan_amount_auto))
         
     def interest_rate_changed(self, value):
-        self.int_rate = value        
+        self.int_rate = value / 100        
         #self.calculate_loan_amount()
 
     def term_years_changed(self, value):
-        self.term = value / 100 
+        self.term = value 
         #self.calculate_loan_amount()
         
     def ave_rent_changed(self):
@@ -643,6 +1042,60 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 message="Wrong value for average rent per unit", 
                 msg_type="warning"
             )
+            
+    def manag_input_changed(self):
+        try:
+            value = self.percent_to_float(
+                self.ui.manag_input.text()
+            )
+            self.management = float(value) / 100
+        except ValueError:
+            self.ui.manag_auto.setText("0")
+            #self.ui.tot_fixed_exp_auto.setText("0")
+            #self.ui.tot_var_exp_auto.setText("0")            
+        
+        self.management_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly,
+            self.management
+        )
+        self.ui.manag_auto.setText(str(self.management_dollar))
+        self.set_currency_format(self.ui.manag_auto)
+        self.update_total_exp_auto()
+
+    def cap_ex_input_changed(self):
+        try:
+            value = self.percent_to_float(
+                self.ui.cap_ex_input.text()
+            )
+            self.cap_ex = float(value) / 100
+        except ValueError:
+            self.ui.cap_ex_auto.setText("0")
+        
+        self.cap_ex_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly,
+            self.cap_ex
+        )
+        self.ui.cap_ex_auto.setText(str(self.cap_ex_dollar))
+        self.set_currency_format(self.ui.cap_ex_auto)
+        self.update_total_exp_auto()
+
+    def vacancy_input_changed(self):
+        try:
+            value = self.percent_to_float(
+                self.ui.vacancy_input.text()
+            )
+            self.vacancy = float(value) / 100
+        except ValueError:
+            self.ui.vacancy_auto.setText("0")
+            return
+        
+        self.vacancy_dollar = REI_Calculations.calculate_dollar_amount(
+            self.total_income_monthly, 
+            self.vacancy
+        )
+        self.ui.vacancy_auto.setText(str(self.vacancy_dollar))
+        self.set_currency_format(self.ui.vacancy_auto)
+        self.update_total_exp_auto()
 
     def repair_and_maintenance_changed(self):
         try:
@@ -677,7 +1130,21 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # dataframe for plotting three totals
         plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
                     
-        data_output.generate_report(self.general_analysis_and_results, self.data, plot_data)
+        property_data = {
+            'address': self.address,
+            'city': self.city,
+            'state': self.state,
+            'zipcode': self.zip_code,
+            'prior_year_taxes': self.prior_year_taxes,
+            'landford_insurance': self.landford_insurance
+        }
+        
+        data_output.generate_report(
+            self.general_analysis_and_results, 
+            self.data, 
+            plot_data,
+            property_data
+        )
         
 
     def show_message(self, message, details=None, msg_type="info"):
@@ -695,17 +1162,25 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
         msg.exec_()
 
+    def percent_to_float(self, value):
+        return str(value).replace(',', '.').replace('%', '')
+    
+    def formatted_currency_to_float(self, value):
+        return re.sub(r'\$|,', '', value)
+        
     def run_calculations(self):
         ## Initially we just need to calculate the 12 key figures.
         ## Will then build a loop for the Pro forma statement.
 
         # Begin by calculating the monthly payment of the loan
         try:            
-            payment = REI_Calculations.loan_payment(self.rate, self.term, self.present_value)
+            payment = REI_Calculations.loan_payment(
+                self.int_rate, self.term, self.loan_amount
+            )
         except Exception as ex:
             _, _, tb = sys.exc_info()
-            self.show_message(message='Run calculations', 
-                              details=f'run_calculations(), loan_payment: Line: {tb.tb_lineno},\n {str(ex)}', 
+            self.show_message(message='Run calculations', \
+                              details=f'run_calculations(), loan_payment: Line: {tb.tb_lineno},\n {str(ex)}', \
                               msg_type='warning')            
             return False
 
@@ -725,12 +1200,12 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         fixed_monthly, fixed_yearly = REI_Calculations.fixed_expenses_monthly(
             self.electric, self.WandS, self.PMI, 
             self.garbage, self.HOA, self.insurance, 
-            self.taxes, self.other
+            self.taxes, self.other_fixed_expense
         )
 
         var_monthly, var_yearly = REI_Calculations.variable_expenses_monthly(
-            self.total_income_monthly, self.vacancy, self.rep_and_main, 
-            self.cap_ex, self.management
+            self.vacancy_dollar, self.rep_and_main_dollar, 
+            self.cap_ex_dollar, self.management_dollar
         )
 
         # 1 Calculate NOI
@@ -747,7 +1222,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
         # 4 Calculate the cash to close
         cash_2_close = REI_Calculations.cash_to_close(
-            self.downpayment,
+            self.downpayment_dollar,
             self.closing_costs,
             self.emergency_fund,
             self.rehab_budget,
@@ -791,10 +1266,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             [ 
                 '${:0,.2f}'.format(cash_2_close),  
                 '${:0,.2f}'.format(self.purchase_price), 
-                '${:0,.2f}'.format(self.tot_monthly_income)
+                '${:0,.2f}'.format(self.total_income_monthly)
             ], 
             [ 
-                '${:0,.2f}'.format(var_monthly), 
+                '${:0,.2f}'.format(var_monthly + fixed_monthly), 
                 '${:0,.2f}'.format(cf_monthly), 
                 '{:0,.2f}%'.format(one_perc)
             ], 
@@ -821,21 +1296,37 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # Set initial values
         cum_NIAF = 0
         cum_CoCR = 0
-        length_yrs = range(1, 10)
+        length_yrs = range(1, 11)
 
         for year_index in length_yrs:
             # Everything will be on a yearly scale and we may calculate some
             # variables two time for this first year
             
             # Calculate total annual income for each year
-            tot_income_annual = REI_Calculations.future_value(
-                self.rent_appreciation, year_index - 1, 0, self.tot_monthly_income
-            )
-
-            # Calculate total fixed expenses for each year
-            fixed_yearly = REI_Calculations.future_value(
-                self.exp_appreciation, year_index - 1, 0, fixed_monthly * 12
-            )
+            try:
+                tot_income_annual = REI_Calculations.future_value(
+                    self.rent_appreciation, year_index - 1, 0, \
+                        self.total_income_monthly * 12
+                )
+            except ZeroDivisionError:
+                _, _, tb = sys.exc_info()
+                self.show_message(message='tot_income_anual, future_value(...)', 
+                                details=f'Line: {tb.tb_lineno},\n {str(ex)}', 
+                                msg_type='warning')                
+                break
+            
+            try:
+                # Calculate total fixed expenses for each year
+                fixed_yearly = REI_Calculations.future_value(
+                    self.exp_appreciation, year_index - 1, 0, fixed_monthly * 12
+                )
+            except ZeroDivisionError:
+                _, _, tb = sys.exc_info()
+                self.show_message(message='fixed_yearly, future_value(...)', 
+                                details=f'Line: {tb.tb_lineno},\n {str(ex)}', 
+                                msg_type='warning')                
+                break
+                        
 
             # Calculate total variable expenses for each year
             var_yearly = tot_income_annual * sum(
@@ -846,18 +1337,26 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             tot_expense_yearly = sum([fixed_yearly, var_yearly])
 
             # Calculate NOI
-            NOI = REI_Calculations.NOI_yearly(
+            NOI_inLoop = REI_Calculations.NOI_yearly(
                 tot_income_annual, fixed_yearly, var_yearly
             )
+
+            NOI_growth = REI_Calculations.growth_rate( 
+                NOI_inLoop, NOI, year_index
+                )
 
             # Calculate Debt service
             if self.term < year_index:
                 payment = 0
             payment_annual = payment * 12
 
+            #print('NOI:', NOI, 'payment:', payment)
+            
             # Calculate NIAF
-            NIAF = REI_Calculations.NIAF_yearly(NOI, payment)
-
+            NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, payment)
+            
+            #print('NIAF:', NIAF)
+            
             # Calculate Property Value
             prop_value = REI_Calculations.future_value(
                 self.prop_appreciation, year_index - 1, 0, self.arv
@@ -874,7 +1373,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate future loan balance
             loan_balance = REI_Calculations.future_value(
-                self.int_rate / 12, year_index * 12, payment, self.loan_amount_auto
+                self.int_rate/12, year_index*12, payment, self.loan_amount_auto
             )
             # Calculate total equity owned by investor
             tot_equity = REI_Calculations.future_equity(prop_value, loan_balance)
@@ -889,49 +1388,59 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate profit if sold
             total_profit_sold = REI_Calculations.tot_profit_sold(
-                prop_value, self.selling_costs, self.loan_amount_auto, cash_2_close, 
-                cum_NIAF, self.downpayment_dollar
+                prop_value, self.selling_costs, loan_balance, cash_2_close, 
+                cum_NIAF#, self.downpayment_dollar
             )
-
+            
+           
             # Calculate the compounded annual growth rate (CAGR) if sold
-            CAGR = REI_Calculations.compound_annual_growth_rate(
-                total_profit_sold, year_index, cash_2_close
+            CAGR = REI_Calculations.growth_rate(
+                total_profit_sold + cash_2_close, cash_2_close, year_index
             )
             
             self.tmp_data[f'Year_{year_index}'] = [
                 tot_income_annual, tot_expense_yearly, fixed_yearly,
-                var_yearly, NOI, 0,
-                0, NIAF, prop_value,
+                var_yearly, NOI_inLoop, NOI_growth,
+                loan_balance, NIAF, prop_value,
                 CoCR, cum_CoCR, tot_equity,
                 equity_perc, ROI, total_profit_sold,
                 CAGR
             ]
             
-            self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
+            # TODO: remove after testing
+            #self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
             
+            # format numbers to two decimal values
             tot_income_annual = '{:0,.2f}'.format(tot_income_annual)
             tot_expense_yearly = '{:0,.2f}'.format(tot_expense_yearly)
             fixed_yearly = '{:0,.2f}'.format(fixed_yearly)
             var_yearly = '{:0,.2f}'.format(var_yearly)
-            NOI = '{:0,.2f}'.format(NOI)
+            NOI_inLoop = '{:0,.2f}'.format(NOI_inLoop)
+            NOI_growth = '{:0,.2f}'.format(NOI_growth)
+            loan_balance = '{:0,.2f}'.format(loan_balance)    
             NIAF = '{:0,.2f}'.format(NIAF)
             prop_value = '{:0,.2f}'.format(prop_value)
             tot_equity = '{:0,.2f}'.format(tot_equity)
             ROI = '{:0,.2f}'.format(ROI)
             total_profit_sold= '{:0,.2f}'.format(total_profit_sold)
             equity_perc = '{:0,.2f}'.format(equity_perc)
-            #CAGR= '{:0,.2f}'.format(CAGR)
+            format_CoCR = '{:0,.2f}'.format(CoCR)
+            format_cum_CoCR = '{:0,.2f}'.format(cum_CoCR)
+            try:
+                format_CAGR = '{:0,.2f}'.format(CAGR)
+            except ValueError as ex:
+                print("run_calculations: CAGR exception: ", ex)
+                format_CAGR = CAGR
             
             
             self.data[f'Year_{year_index}'] = [
                 f'${tot_income_annual}', f'${tot_expense_yearly}', f'${fixed_yearly}',
-                f'${var_yearly}', f'${NOI}', '0.0%',
-                '$0', f'${NIAF}', f'${prop_value}',
-                f'{CoCR}%' ,f'{cum_CoCR}%', f'${tot_equity}',
+                f'${var_yearly}', f'${NOI_inLoop}', f'{NOI_growth}%',
+                f'${loan_balance}', f'${NIAF}', f'${prop_value}',
+                f'{format_CoCR}%' ,f'{format_cum_CoCR}%', f'${tot_equity}',
                 f'{equity_perc}%', f'{ROI}%', f'${total_profit_sold}',
-                f'{CAGR}%'
+                f'{format_CAGR}%'
             ]
-
 
 
 if __name__ == "__main__":

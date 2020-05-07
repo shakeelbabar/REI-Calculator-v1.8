@@ -2,13 +2,13 @@
 
 # Form implementation generated from reading ui file 'REI_calc_main_design.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.2
+# Created by: PyQt5 UI code generator 5.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import resources
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -1268,4 +1268,4 @@ class Ui_MainWindow(object):
         self.actionAbout_REI_Calculator.setText(_translate("MainWindow", "About REI Calculator"))
         self.actionSFI.setText(_translate("MainWindow", "SFI"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))
-
+import SFI-white_rc

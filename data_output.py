@@ -4,19 +4,32 @@ import matplotlib.pyplot as plt
 from numpy import arange
 
 logo_html = ""
+property_address = ""
 images_html = ""
 ana_and_res_table_html = ""
 inc_exp_cash_flow_graph_html = ""
 ten_year_pro_forma_html = ""
 
-def generate_report(gen_analysis_data, data, plot_data):
+def generate_report(gen_analysis_data, data, plot_data, property_data):
     global logo_html
+    global property_address
     global images_html
     global ana_and_res_table_html
     global inc_exp_cash_flow_graph_html
     global ten_year_pro_forma_html
                
     logo_html = "<img alt='SFI white (logo)' src='logo.png' />"
+    
+    property_address = (
+        '<ul class="list-group">'
+        f'<li>address: {property_data["address"]}</li>'
+        f'<li>city: {property_data["city"]}</li>'
+        f'<li>state: {property_data["state"]}</li>'
+        f'<li>zip code: {property_data["zipcode"]}</li>'
+        f'<li>prior year taxes: {property_data["prior_year_taxes"]}</li>'
+        f'<li>landford insurance: {property_data["landford_insurance"]}</li>'
+        '</ul>'
+    )
     
     # TODO: images
     images = ['fortesting.png', 'fortesting.png']
@@ -25,7 +38,6 @@ def generate_report(gen_analysis_data, data, plot_data):
     # general analysis and results
     ana_and_res_table_html = analysis_and_results_to_html(gen_analysis_data)
     
-    # TODO: graph
     inc_exp_cash_flow_graph_html = graph_to_html(plot_data)
     
     # 10-year Pro-Forma
@@ -33,21 +45,27 @@ def generate_report(gen_analysis_data, data, plot_data):
     
     html = create_report_html()
     
-    with open('report.html', 'w') as f:
-        f.write(html)
+    try:
+        with open('report.html', 'w') as f:
+            f.write(html)
+    except Exception as ex:
+        print("generate_report, exception:", ex)
+        return None
+    
+    return 'report.html'
     
 def graph_to_html(data):
-    fig = plt.figure()
+    fig, ax = plt.subplots()
     
     x = data.columns.values.tolist()
     max_y = 60000
     step = 10000
     #plt.yticks(arange(1300, max_y, step=step))
-    plt.plot(x, data.iloc[0, :])
-    plt.plot(x, data.iloc[1, :])
-    plt.plot(x, data.iloc[2, :])    
-    #plt.plot(x, y, 'r')  # blue stars
-
+    ax.plot(x, data.iloc[0, :], label='Total Income')
+    ax.plot(x, data.iloc[1, :], label='Total Expenses')
+    ax.plot(x, data.iloc[2, :], label='NIAF')    
+    #plt.plot(x, y, 'r')  # blue stars    
+    legend = ax.legend(loc='best', shadow=False, fontsize='x-large')       
     fig.savefig('plot.png')
     
     return f'<img src="plot.png" />'
@@ -78,17 +96,16 @@ def ten_year_pro_forma_to_html(data):
     df.rename(columns={'labels':'---'}, inplace=True)
     
     df_final = df.style.set_properties(**{
-                            'border': '1px',
                             'background-color': special_row_bgcolor,
                             'color': 'white',
-                            'border-color': '#000000'}, 
+                            }, 
                             subset=IndexSlice[selected_rows, selected_columns]
     )
     
     df_final = df_final.set_properties(**{
                             'background-color': caption_bgcolor,
-                            'color': 'black',
-                            'border-color': '#000000'}, 
+                            'color': 'black'
+                            }, 
                             subset=IndexSlice[:, '---']                            
     ).hide_index()
     
@@ -97,19 +114,23 @@ def ten_year_pro_forma_to_html(data):
 def create_report_html():
     html_template = (
         "<html>"
+        "<head>"
+        "<title>Report</title>"
+        "<meta charset='UTF-8'>"
         "<link href='bootstrap-4.4.1-dist/css/bootstrap.min.css' rel='stylesheet'>"
+        "</head>"
         "<body>"
         "<div class='container'>"
-        f"{logo_html}"
-        "<h1>\"Property Address\" Report</h1>"
+        f"<div>{logo_html}</div>"
+        f"<div>{property_address}</div>"
         "<br>"
         f"{images_html}"
         "<h3>General Analysis and Results</h3>"
-        f"{ana_and_res_table_html}"
+        f"<div>{ana_and_res_table_html}</div>"
         "<br>"
-        f"{inc_exp_cash_flow_graph_html}"
+        f"<div>{inc_exp_cash_flow_graph_html}</div>"
         "<br>"
-        f"{ten_year_pro_forma_html}"
+        f"<div>{ten_year_pro_forma_html}</div>"
         "</div>"
         "</body>"
         "</html>"

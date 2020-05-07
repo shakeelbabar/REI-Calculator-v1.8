@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.2
+# Created by: PyQt5 UI code generator 5.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -14,7 +14,7 @@ class Ui_SettingsDialog(object):
     def setupUi(self, SettingsDialog):
         SettingsDialog.setObjectName("SettingsDialog")
         SettingsDialog.setWindowModality(QtCore.Qt.WindowModal)
-        SettingsDialog.resize(299, 192)
+        SettingsDialog.resize(299, 196)
         self.save_button = QtWidgets.QPushButton(SettingsDialog)
         self.save_button.setGeometry(QtCore.QRect(220, 160, 75, 31))
         self.save_button.setFlat(False)
@@ -42,7 +42,7 @@ class Ui_SettingsDialog(object):
         _translate = QtCore.QCoreApplication.translate
         SettingsDialog.setWindowTitle(_translate("SettingsDialog", "Settings"))
         self.save_button.setText(_translate("SettingsDialog", "Save"))
-        self.bgcolor_groupbox.setTitle(_translate("SettingsDialog", "Background color"))
+        self.bgcolor_groupbox.setTitle(_translate("SettingsDialog", "Row background color"))
         self.special_row_bgcolor_label.setText(_translate("SettingsDialog", "Special rows:"))
         self.caption_bgcolor_label.setText(_translate("SettingsDialog", "Captions:"))
         self.caption_bgcolor_button.setText(_translate("SettingsDialog", "color"))
