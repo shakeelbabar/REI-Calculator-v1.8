@@ -1,0 +1,54 @@
+Property_Tab
+Property_Address:Now Address
+Property_City:Anytown
+Property_State:AK
+Property_ZipCode:12340
+Property_PriorYearsTaxes:500.0
+Property_LandLordInsurance:230.0
+
+Purchase_Tab
+Purchase_AskingPrice: 34545.0
+Purchase_PurchasePrice: 200000.0
+Purchase_FinanceRehab: Yes
+Purchase_RehabBudget: 50000.0
+Purchase_ARV: 325000.0
+Purchase_ClosingCost: 3500.0
+Purchase_EmergencyFund: 5000.0
+Purchase_Downpayment(%): 0.2
+REMOVE Purchase_Downpayment($): 40000.0
+REMOVE Purchase_LoanAmount: 210000.0
+Purchase_Term: 30
+Purchase_Annual_Interest_Rate: 0.045
+
+Income_Tab
+Income_NumberOfUnits: 121.0
+Income_AvgRent/unit: 1200.0
+REMOVE Income_TotalRentIncome: 145200.0
+Income_OtherIncome: 900000.0
+REMOVE Income_TotalMonthly: 1045200.0
+
+Expense_Tab
+REMOVE Expense_TotalFixedExpense: 10502.85
+Expense_Electricity: 454.00
+Expense_WandS: 898.00
+Expense_PMI: 8998.00
+Expense_Garbage: 8.02
+Expense_HOA: 80.00
+REMOVE Expense_Taxes: 41.67
+REMOVE Expense_Insurance: 19.17
+REMOVE Expense_FixedExpense: 4.00
+REMOVE Expense_VariableExpense: 878824018.80
+Expense_Rep&Main(%): 53.00
+REMOVE Expense_Rep&Mian($): 553956.00
+Expense_CapEX(%): 89.00
+REMOVE Expense_CapEX)%): 930228.00
+Expense_Vacancy(%): 0.90
+REMOVE Expense_Vacancy($): 9406.80
+Expense_Management(%): 83.939.00
+REMOVE Expense_Management($): 877330428.00
+
+Assumptions_Tab
+Assumptions_RentAppreciation(%): 0.002
+Assumptions_ExpenseAppreciation(%): 0.003
+Assumptions_PropertyAppreciation(%): 0.004
+Assumptions_SellingCost: 0.005

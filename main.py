@@ -10,8 +10,7 @@ from pandas import DataFrame
 from gui2 import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
 import REI_Calculations
-import data_output 
-
+import data_output
 
 class SettingsWindow(QDialog):
     caption_bgcolor = "#ffbf00"
@@ -351,9 +350,59 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
         fileName, _ = PyQt5.QtWidgets.QFileDialog.getOpenFileName(None, "Open file", "",
                                                                   "All files (*.*)", options=options)
+        values = []
         if fileName:
-            print(fileName)
-            
+            file = open(fileName)
+            lines = file.readlines()
+            for line in lines:
+                if line.__contains__(':'):
+                    parts = line.split(':')
+                    values.append(parts[1].strip())
+
+        # DEFINE PROPERTY VALUES
+        self.ui.address_input.setText(values[0])
+        self.ui.city_input.setText(values[1])
+        self.ui.state_input.setCurrentText(values[2])
+        self.ui.zip_input.setText(values[3])
+        self.ui.taxes_input.setText(values[4])
+        self.ui.annual_insurance_input.setText(values[5])
+
+        # DEFINE PURCHASE VALUES
+        self.ui.asking_price_input.setText(values[6])
+        self.ui.purchase_price_input.setText(values[7])
+        self.ui.fin_rehab_logical.setCurrentText(values[8])
+        self.ui.rehab_budget_input.setText(values[9])
+        self.ui.arv_input.setText(values[10])
+        self.ui.closing_costs_input.setText(values[11])
+        self.ui.emerg_fund_input.setText(values[12])
+        self.ui.downpayment_percentage_input_2.setValue(int(values[13])) # check the value  * 100
+        self.ui.term_input_2.setValue(int(values[14]))
+        self.ui.int_rate_input_2.setValue(float(values[15]))   #check for values * 100
+
+        # DEFINE INCOME VALUES
+        self.ui.num_units_input.setValue(int(float(values[16])))
+        self.ui.ave_rent_input.setText(values[17])
+        self.ui.other_income_month_input.setText(values[18])
+
+        # DEFINE EXPENSES VALUES
+        self.ui.electric_input.setText(values[19])
+        self.ui.w_and_s_input.setText(values[20])
+        self.ui.pmi_input.setText(values[21])
+        self.ui.garbage_input.setText(values[22])
+        self.ui.hoa_input.setText(values[23])
+        self.ui.r_and_m_input.setText(values[24])
+        self.ui.cap_ex_input.setText(values[25])
+        self.ui.vacancy_input.setText(values[26])
+        self.ui.manag_input.setText(values[27])
+
+
+        # ASSUMPTIONS TAB INPUTS
+        self.ui.rent_appreciation_input.setText(values[28])
+        self.ui.exp_appreciation_input.setText(values[29])
+        self.ui.prop_appreciation_input.setText(values[30])
+        self.ui.selling_costs_input.setText(values[31])
+
+
     def saveFile(self):
         import PyQt5
         options = PyQt5.QtWidgets.QFileDialog.Options()
@@ -361,8 +410,226 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         fileName, _ = PyQt5.QtWidgets.QFileDialog.getSaveFileName(None, "Save file", "",
                                                                   "All files (*.*)", options=options)
         if fileName:
-            print(fileName)
-            
+            try:
+                # property info
+                self.address = self.ui.address_input.text()
+                self.city = self.ui.city_input.text()
+                self.state = self.ui.state_input.currentText()
+                self.zip_code = int(self.ui.zip_input.text())
+                self.prior_year_taxes = float(self.formatted_currency_to_float(
+                    self.ui.taxes_input.text()
+                ))
+                self.landford_insurance = float(self.formatted_currency_to_float(
+                    self.ui.annual_insurance_input.text()
+                ))
+                self.int_rate = self.ui.int_rate_input_2.value()
+
+                # purchase information tab inputs
+                self.asking_price = float(self.formatted_currency_to_float(
+                    self.ui.asking_price_input.text()
+                ))
+                self.purchase_price = float(self.formatted_currency_to_float(
+                    self.ui.purchase_price_input.text()
+                ))
+                self.finance_rehab_logical = self.formatted_currency_to_float(
+                    self.ui.fin_rehab_logical.currentText()
+                )
+                self.rehab_budget = float(self.formatted_currency_to_float(
+                    self.ui.rehab_budget_input.text()
+                ))
+                self.arv = float(self.formatted_currency_to_float(
+                    self.ui.arv_input.text()
+                ))
+                self.closing_costs = float(self.formatted_currency_to_float(
+                    self.ui.closing_costs_input.text()
+                ))
+                self.emergency_fund = float(self.formatted_currency_to_float(
+                    self.ui.emerg_fund_input.text()
+                ))
+                self.downpayment = int(self.percent_to_float(
+                    self.ui.downpayment_percentage_input_2.value()
+                ))
+                # REMOVE DOWNPAYMENT ($)
+                # self.downpayment_dollar = float(self.formatted_currency_to_float(
+                #     self.ui.dp_dollar_auto_2.text()
+                # ))
+                # REMOVE LOAN AMOUNT
+                # self.loan_amount = float(self.formatted_currency_to_float(
+                #     self.ui.loan_amount_auto_2.text()
+                # ))
+                self.term = self.ui.term_input_2.value()
+                self.int_rate = self.formatted_currency_to_float(
+                    self.ui.int_rate_input_2.text()
+                )
+                self.int_rate = float(self.int_rate)
+
+                # income tab inputs
+                self.num_units = float(self.ui.num_units_input.value())
+                self.ave_rent = float(self.formatted_currency_to_float(
+                    self.ui.ave_rent_input.text()
+                ))
+                # REMOVE TOTAL RENT INCOME
+                # self.tot_rent_income = float(self.formatted_currency_to_float(
+                #     self.ui.tot_rent_month_auto.text()
+                # ))
+                self.other_income = float(self.formatted_currency_to_float(
+                    self.ui.other_income_month_input.text()
+                ))
+                # REMOVE TOTAL MONTHLY INCOME
+                # self.total_income_monthly = float(self.formatted_currency_to_float(
+                #     self.ui.tot_income_month_auto.text()
+                # ))
+
+                # EXPENSES TAB INPUTS
+                # REMOVE TOTAL FIXED EXPENSE
+                # self.total_fixed_expense = float(self.formatted_currency_to_float(
+                #     self.ui.tot_fixed_exp_auto.text()
+                # ))
+                self.electric = str(self.formatted_currency_to_float(
+                    self.ui.electric_input.text()
+                ))
+                self.WandS = str(self.formatted_currency_to_float(
+                    self.ui.w_and_s_input.text()
+                ))
+                self.PMI = str(self.formatted_currency_to_float(
+                    self.ui.pmi_input.text()
+                ))
+                self.garbage = str(self.formatted_currency_to_float(
+                    self.ui.garbage_input.text()
+                ))
+                self.HOA = str(self.formatted_currency_to_float(
+                    self.ui.hoa_input.text()
+                ))
+                # REMOVE TAXES, INSURANCE, FIXED EXPENSE, VARIABLE EXPENSE
+                # self.taxes = str(self.formatted_currency_to_float(
+                #     self.ui.monthly_taxes_auto.text()
+                # ))
+                # self.insurance = str(self.formatted_currency_to_float(
+                #     self.ui.insurance_auto.text()
+                # ))
+                # self.other_fixed_expense = str(self.formatted_currency_to_float(
+                #     self.ui.other_input.text()
+                # ))
+                # self.total_variable_expense = str(self.formatted_currency_to_float(
+                #     self.ui.tot_var_exp_auto.text()
+                # ))
+                self.rep_and_main = str(self.percent_to_float(
+                    self.ui.r_and_m_input.text()
+                ))
+                # REMOVE REP & MAIN ($)
+                # self.rep_and_main_dollar = str(self.formatted_currency_to_float(
+                #     self.ui.r_and_m_auto.text()
+                # ))
+                self.cap_ex = str(self.percent_to_float(
+                    self.ui.cap_ex_input.text()
+                ))
+                # REMOVE CAP EX ($)
+                # self.cap_ex_dollar = str(self.formatted_currency_to_float(
+                #     self.ui.cap_ex_auto.text()
+                # ))
+                self.vacancy = str(self.percent_to_float(
+                    self.ui.vacancy_input.text()
+                ))
+                # REMOVE EXPENSE VACANCY
+                # self.vacancy_dollar = str(self.formatted_currency_to_float(
+                #     self.ui.vacancy_auto.text()
+                # ))
+                self.management = str(self.percent_to_float(
+                    self.ui.manag_input.text()
+                ))
+                # REMOVE EXPENSE MANAGEMENT
+                # self.management_dollar = str(self.formatted_currency_to_float(
+                #     self.ui.manag_auto.text()
+                # ))
+
+                # Assumptions tab inputs
+                self.rent_appreciation = float(
+                    self.percent_to_float(self.ui.rent_appreciation_input.text())
+                )
+                self.exp_appreciation = float(
+                    self.percent_to_float(self.ui.exp_appreciation_input.text())
+                )
+                self.prop_appreciation = float(
+                    self.percent_to_float(self.ui.prop_appreciation_input.text())
+                )
+                self.selling_costs = float(
+                    self.percent_to_float(self.ui.selling_costs_input.text())
+                )
+
+            except Exception as ex:
+                _, _, tb = sys.exc_info()
+                self.show_message(message='Save Values',
+                                  details=f'Line: {tb.tb_lineno},\n {str(ex)}',
+                                  msg_type='warning')
+
+            # print(fileName)
+            file = open(fileName, 'w')
+            print("opened")
+
+            # Property information tab inputs
+            file.write(str("Property_Tab\n"))
+            file.write(str("Property_Address:"+self.address+"\n"))
+            file.write(str("Property_City:"+self.city+"\n"))
+            file.write(str("Property_State:"+self.state+"\n"))
+            file.write(str("Property_ZipCode:"+str(self.zip_code)+"\n"))
+            file.write(str("Property_PriorYearsTaxes:"+str(self.prior_year_taxes)+"\n"))
+            file.write(str("Property_LandLordInsurance:"+str(self.landford_insurance)+"\n\n"))
+
+            # PURCHASE INFORMATION TAB INPUTS
+            file.write(str("Purchase_Tab\n"))
+            file.write("Purchase_AskingPrice: "+str(self.asking_price)+"\n")
+            file.write("Purchase_PurchasePrice: "+str(self.purchase_price)+"\n")
+            file.write("Purchase_FinanceRehab: "+str(self.finance_rehab_logical)+"\n")
+            file.write("Purchase_RehabBudget: "+str(self.rehab_budget)+"\n")
+            file.write("Purchase_ARV: "+str(self.arv)+"\n")
+            file.write("Purchase_ClosingCost: "+str(self.closing_costs)+"\n")
+            file.write("Purchase_EmergencyFund: "+str(self.emergency_fund)+"\n")
+            file.write("Purchase_Downpayment(%): "+str(self.downpayment)+"\n")
+            # file.write("Purchase_Downpayment($): "+str(self.downpayment_dollar)+"\n")
+            # file.write("Purchase_LoanAmount: "+str(self.loan_amount)+"\n")
+            file.write("Purchase_Term: "+str(self.term)+"\n")
+            file.write("Purchase_AnnauLInterestRate: "+str(self.int_rate)+"\n\n")
+
+            # INCOME TAB INPUTS
+            file.write(str("Income_Tab\n"))
+            file.write("Income_NumberOfUnits: "+str(self.num_units)+"\n")
+            file.write("Income_AvgRent/unit: "+str(self.ave_rent)+"\n")
+            # file.write("Income_TotalRentIncome: "+str(self.tot_rent_income)+"\n")
+            file.write("Income_OtherIncome: "+str(self.other_income)+"\n\n")
+            # file.write("Income_TotalMonthly: "+str(self.total_income_monthly)+"\n\n")
+
+            # EXPENSE TAB INPUTS
+            file.write(str("Expense_Tab\n"))
+            # file.write("Expense_TotalFixedExpense: "+str(self.total_fixed_expense)+"\n")
+            file.write("Expense_Electricity: "+str(self.electric)+"\n")
+            file.write("Expense_WandS: "+str(self.WandS)+"\n")
+            file.write("Expense_PMI: "+str(self.PMI)+"\n")
+            file.write("Expense_Garbage: "+str(self.garbage)+"\n")
+            file.write("Expense_HOA: "+str(self.HOA)+"\n")
+            # file.write("Expense_Taxes: "+str(self.taxes)+"\n")
+            # file.write("Expense_Insurance: "+str(self.insurance)+"\n")
+            # file.write("Expense_FixedExpense: "+str(self.other_fixed_expense)+"\n")
+            # file.write("Expense_VariableExpense: "+str(self.total_variable_expense)+"\n")
+            file.write("Expense_Rep&Main(%): "+str(self.rep_and_main)+"\n")
+            # file.write("Expense_Rep&Mian($): "+str(self.rep_and_main_dollar)+"\n")
+            file.write("Expense_CapEX(%): "+str(self.cap_ex)+"\n")
+            # file.write("Expense_CapEX($): "+str(self.cap_ex_dollar)+"\n")
+            file.write("Expense_Vacancy(%): "+str(self.vacancy)+"\n")
+            # file.write("Expense_Vacancy($): "+str(self.vacancy_dollar)+"\n")
+            file.write("Expense_Management(%): "+str(self.management)+"\n\n")
+            # file.write("Expense_Management($): "+str(self.management_dollar)+"\n")
+
+            # ASSUMPTIONS TAB INPUTS
+            file.write(str("Assumptions_Tab\n"))
+            file.write("Assumptions_RentAppreciation(%): "+str(self.rent_appreciation)+"\n")
+            file.write("Assumptions_ExpenseAppreciation(%): "+str(self.exp_appreciation)+"\n")
+            file.write("Assumptions_PropertyAppreciation(%): "+str(self.prop_appreciation)+"\n")
+            file.write("Assumptions_SellingCost: "+str(self.selling_costs)+"\n\n")
+
+            print("success all written")
+            file.close()
+            QMessageBox.information(self, "Save File", "File Saved Successfully", QMessageBox.Ok)
+
     def exit(self):
         exit(1)
         
@@ -388,7 +655,10 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def set_single_float_format(self, ui_control):
         value = self.percent_to_float(ui_control.text())
         ui_control.setText(value)
-        
+
+
+        # init Signals Method initializes all the ui_controls and buttons
+        # including Menu Bars and other components buttons and controls
     def init_signals(self):
         self.ui.annual_insurance_input.focused.connect(
             lambda uic=self.ui.annual_insurance_input: self.focused_field(uic)
@@ -1120,8 +1390,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     def generate_report(self):
         if not self.validate_values():
             return
-        #self.init_fake_values()
-        
+        # self.init_fake_values()
+
         self.run_calculations()
         if not self.data:
             print("No data after calculations")
