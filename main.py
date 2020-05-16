@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import * #QDoubleValidator,
 from PyQt5.QtWidgets import QDialog, QColorDialog, QMessageBox
 import sys
 import re
@@ -74,7 +74,7 @@ class SettingsWindow(QDialog):
         self.close()
 
 
-class CalculatorWindow(QtWidgets.QMainWindow):  
+class CalculatorWindow(QtWidgets.QMainWindow):
     
     # data for html table
     data = None
@@ -344,6 +344,57 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
         return True
 
+
+    def NewFile(self):
+        check = QMessageBox.question(self, "Confirm", "Are you sure to reset the Values?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        if(check == QMessageBox.Yes):
+            # DEFINE PROPERTY VALUES
+            self.ui.address_input.setText("")
+            self.ui.city_input.setText("")
+            self.ui.state_input.setCurrentText("")
+            self.ui.zip_input.setText("")
+            self.ui.taxes_input.setText("")
+            self.ui.annual_insurance_input.setText("")
+
+            # DEFINE PURCHASE VALUES
+            self.ui.asking_price_input.setText("")
+            self.ui.purchase_price_input.setText("")
+            self.ui.fin_rehab_logical.setCurrentText("")
+            self.ui.rehab_budget_input.setText("")
+            self.ui.arv_input.setText("")
+            self.ui.closing_costs_input.setText("")
+            self.ui.emerg_fund_input.setText("")
+            self.ui.downpayment_percentage_input_2.setValue(0) # check the value  * 100
+            self.ui.term_input_2.setValue(0)
+            self.ui.int_rate_input_2.setValue(0)   #check for values * 100
+
+            # DEFINE INCOME VALUES
+            self.ui.num_units_input.setValue(0)
+            self.ui.ave_rent_input.setText("")
+            self.ui.other_income_month_input.setText("")
+
+            # DEFINE EXPENSES VALUES
+            self.ui.tot_fixed_exp_auto.setText("")
+            self.ui.tot_var_exp_auto.setText("")
+            self.ui.electric_input.setText("")
+            self.ui.w_and_s_input.setText("")
+            self.ui.pmi_input.setText("")
+            self.ui.garbage_input.setText("")
+            self.ui.hoa_input.setText("")
+            self.ui.r_and_m_input.setText("")
+            self.ui.cap_ex_input.setText("")
+            self.ui.vacancy_input.setText("")
+            self.ui.manag_input.setText("")
+            self.ui.insurance_auto.setText("")
+
+
+            # ASSUMPTIONS TAB INPUTS
+            self.ui.rent_appreciation_input.setText("")
+            self.ui.exp_appreciation_input.setText("")
+            self.ui.prop_appreciation_input.setText("")
+            self.ui.selling_costs_input.setText("")
+
+
     def loadFile(self):
         import PyQt5
         options = PyQt5.QtWidgets.QFileDialog.Options()
@@ -407,9 +458,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         import PyQt5
         options = PyQt5.QtWidgets.QFileDialog.Options()
         options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, _ = PyQt5.QtWidgets.QFileDialog.getSaveFileName(None, "Save file", "",
+        fileName, _ = PyQt5.QtWidgets.QFileDialog.getSaveFileName(None, "Save File", "",
                                                                   "All files (*.*)", options=options)
         if fileName:
+            if not str(fileName).__contains__(".txt"):
+                fileName += ".txt"
             try:
                 # property info
                 self.address = self.ui.address_input.text()
@@ -630,16 +683,20 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             file.close()
             QMessageBox.information(self, "Save File", "File Saved Successfully", QMessageBox.Ok)
 
+
     def exit(self):
         exit(1)
         
     def showAbout(self):
         from about import Ui_Dialog
-        Dialog = QtWidgets.QDialog()
+        d = QtWidgets.QDialog()
         ui = Ui_Dialog()
-        ui.setupUi(Dialog)
-        Dialog.show()
-                
+        ui.setupUi(d)
+        d.setWindowTitle("About REI Calculator Version-1.8")
+        # d.setObjectName("about_dialog")
+        # d.resize(400,500)
+        d.exec_()
+
     def focused_field(self, ui_control, ftype='dollar'):
         if ftype == 'dollar':
             self.set_decimal_format(ui_control)
@@ -668,9 +725,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         )
         self.ui.Generate_Report.clicked.connect(self.generate_report)
         self.ui.actionSettings.triggered.connect(self.settings_window)
+        self.ui.actionNew.triggered.connect(self.NewFile)
         self.ui.actionLoad.triggered.connect(self.loadFile)
         self.ui.actionSave.triggered.connect(self.saveFile)
         self.ui.actionSave_As.triggered.connect(self.saveFile)
+        self.ui.actionExecute.triggered.connect(self.generate_report)
         self.ui.actionExit.triggered.connect(self.exit)
         self.ui.actionAbout_REI_Calculator.triggered.connect(self.showAbout)
         # auto fields
@@ -1391,15 +1450,12 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         if not self.validate_values():
             return
         # self.init_fake_values()
-
         self.run_calculations()
         if not self.data:
             print("No data after calculations")
             return
-        
         # dataframe for plotting three totals
         plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
-                    
         property_data = {
             'address': self.address,
             'city': self.city,
@@ -1408,13 +1464,13 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             'prior_year_taxes': self.prior_year_taxes,
             'landford_insurance': self.landford_insurance
         }
-        
         data_output.generate_report(
             self.general_analysis_and_results, 
             self.data, 
             plot_data,
             property_data
         )
+        QMessageBox.information(self, "Report Generated", "Report has been Generated successfully.", QMessageBox.Ok)
         
 
     def show_message(self, message, details=None, msg_type="info"):
@@ -1437,7 +1493,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     
     def formatted_currency_to_float(self, value):
         return re.sub(r'\$|,', '', value)
-        
+
     def run_calculations(self):
         ## Initially we just need to calculate the 12 key figures.
         ## Will then build a loop for the Pro forma statement.

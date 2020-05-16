@@ -19,22 +19,16 @@ def generate_report(gen_analysis_data, data, plot_data, property_data):
     global ten_year_pro_forma_html
                
     logo_html = "<img alt='SFI white (logo)' src='logo.png' />"
-
-    print("Setting Propery Data")
+    
     property_address = (
-        "<div class='card'>"
-            "<h3 class='card-header bg-primary text-white'>Property Information</h3>"
-            "<div class='card-body'>"
-                "<dl class='row'>"
-                    f'<dt class="col-6">Address:</dt><dd>{property_data["address"]}</dd>'
-                    f'<dt class="col-6">City:</dt><dd>{property_data["city"]}</dd>'
-                    f'<dt class="col-6">State:</dt><dd>{property_data["state"]}</dd>'
-                    f'<dt class="col-6">Zip Code:</dt><dd>{property_data["zipcode"]}</dd>'
-                    f'<dt class="col-6">Prior Year Taxes:</dt><dd>{property_data["prior_year_taxes"]}</dd>'
-                    f'<dt class="col-6">Landford Insurance:</dt><dd>{property_data["landford_insurance"]}</dd>'
-                "</dl>"
-            "</div>"
-        "</div>"
+        '<ul class="list-group">'
+        f'<li>address: {property_data["address"]}</li>'
+        f'<li>city: {property_data["city"]}</li>'
+        f'<li>state: {property_data["state"]}</li>'
+        f'<li>zip code: {property_data["zipcode"]}</li>'
+        f'<li>prior year taxes: {property_data["prior_year_taxes"]}</li>'
+        f'<li>landford insurance: {property_data["landford_insurance"]}</li>'
+        '</ul>'
     )
     
     # TODO: images
@@ -50,21 +44,14 @@ def generate_report(gen_analysis_data, data, plot_data, property_data):
     ten_year_pro_forma_html = ten_year_pro_forma_to_html(data)    
     
     html = create_report_html()
-
-    import PyQt5
-    options = PyQt5.QtWidgets.QFileDialog.Options()
-    options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
-    fileName, _ = PyQt5.QtWidgets.QFileDialog.getSaveFileName(None, "Generate Report", "",
-                                                              "HTML (*.html)", options=options)
-    if fileName:
-        if not str(fileName).__contains__(".html"):
-            fileName += ".html"
-        try:
-            with open(fileName, 'w') as f:
-                f.write(html)
-        except Exception as ex:
-            print("generate_report, exception:", ex)
-            return None
+    
+    try:
+        with open('report.html', 'w') as f:
+            f.write(html)
+    except Exception as ex:
+        print("generate_report, exception:", ex)
+        return None
+    
     return 'report.html'
     
 def graph_to_html(data):
@@ -100,14 +87,14 @@ def ten_year_pro_forma_to_html(data):
                     "Cash on Cash Return", "Cum. CoCR", "Total Equity",
                     "Percent of Equity", "ROI", "Total Profit If Sold", "CAGR if Sold"]
     
-    df = DataFrame.from_dict(data)
+    df = DataFrame.from_dict(data)    
     df['labels'] = index_labels
     years = range(1, 10)    
     selected_columns = [f'Year_{index}' for index in years]    
     selected_rows = [4,7, 13]
     df = df[['labels'] + selected_columns]
     df.rename(columns={'labels':'---'}, inplace=True)
-
+    
     df_final = df.style.set_properties(**{
                             'background-color': special_row_bgcolor,
                             'color': 'white',
@@ -121,7 +108,7 @@ def ten_year_pro_forma_to_html(data):
                             }, 
                             subset=IndexSlice[:, '---']                            
     ).hide_index()
-    df_final.set_table_attributes('class="table table-striped table-sm"')
+    
     return df_final.render()
             
 def create_report_html():
@@ -130,71 +117,23 @@ def create_report_html():
         "<head>"
         "<title>Report</title>"
         "<meta charset='UTF-8'>"
-        "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css' integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm' crossorigin='anonymous'>"
-        # "<link href='bootstrap-4.4.1-dist/css/bootstrap.min.css' rel='stylesheet'>"
-        '''
-        <style rel='stylesheet'>
-        .row-content{
-            margin: 0px auto;
-            padding: 20px 0px 20px 0px;
-            min-height: auto;
-            }
-        .jumbotron{
-            padding: 20px 30px 20px 30px; 
-            margin: 0px auto;
-            background: #9575CD;
-        }
-        #title{
-            left: 0px; 
-            position: absolute; 
-            bottom: 0px;
-        }
-        thead{
-            background-color: black;
-            color: white;
-            padding: 8px;
-            text-align: center;
-        }
-        </style>'''
+        "<link href='bootstrap-4.4.1-dist/css/bootstrap.min.css' rel='stylesheet'>"
         "</head>"
         "<body>"
-        '''        
-        <div class='jumbotron'>
-            <div class='container'>
-                <div class='row'>
-                    <div class='col-12 col-md-3 align-self-center text-center'>
-                        <img class='border border-dark rounded' alt='SFI white (logo)' src='logo.png' />
-                    </div>
-                    <div class='col-12 col-md-9'>
-                        <span id='title'>
-                            <h1 class='mb-0'>Steiner Foresti Investment</h1>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        
-        
-        <div class='container'>
-            <div class="row row-content">'''
-                f'<div class="col-sm">{property_address}</div>'
-        '''</div>
-    
-        <div class="row row-content">'''
-            f'<div class="col-sm"><h4 class="mb-0 bg-dark text-white border border-dark rounded-top" style="padding: 15px;">General Analysis and Results</h4>{ana_and_res_table_html}</div>'
-        '''</div>
-    
-        <div class="row row-content">'''
-            f'<div class="col-sm"><h3>Plot Analysis</h3>{inc_exp_cash_flow_graph_html}</div>'
-        '''</div>
-    
-        <div class="row row-content">'''
-            f'<div class="col-sm"><h3>Table Heading Here</h3>{ten_year_pro_forma_html}</div>'
-        '''</div>
+        "<div class='container'>"
+        f"<div>{logo_html}</div>"
+        f"<div>{property_address}</div>"
+        "<br>"
+        f"{images_html}"
+        "<h3>General Analysis and Results</h3>"
+        f"<div>{ana_and_res_table_html}</div>"
+        "<br>"
+        f"<div>{inc_exp_cash_flow_graph_html}</div>"
+        "<br>"
+        f"<div>{ten_year_pro_forma_html}</div>"
+        "</div>"
         "</body>"
         "</html>"
-        '''
     )
     return html_template
 
@@ -207,8 +146,9 @@ def analysis_and_results_to_html(values):
     # re-order columns
     ordered_columns = ['titles1', 'a', 'titles2', 'b', 'titles3', 'c']
     df = df[ordered_columns]
+    
     # hide columns and index
-    return df.to_html(header=None, index=False, classes="table table-striped")
+    return df.to_html(header=None, index=False)
 
 
 def set_dataframe_style():
