@@ -13,8 +13,8 @@ import REI_Calculations
 import data_output
 
 class SettingsWindow(QDialog):
-    caption_bgcolor = "#ffbf00"
-    special_row_bgcolor = "#359aa5"
+    caption_bgcolor = "#39974A"
+    special_row_bgcolor = "#973986"
 
     def __init__(self, parent=None):
         super(SettingsWindow, self).__init__(parent)
@@ -683,6 +683,9 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             file.close()
             QMessageBox.information(self, "Save File", "File Saved Successfully", QMessageBox.Ok)
 
+    def saveAsPDF(self, html_report):
+        import pdfkit
+        pdfkit.from_file(html_report, "Report.pdf")
 
     def exit(self):
         exit(1)
@@ -1446,6 +1449,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.show_message(message="Wrong value for cap. ex", 
                               msg_type="warning")
 
+
     def generate_report(self):
         if not self.validate_values():
             return
@@ -1464,14 +1468,15 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             'prior_year_taxes': self.prior_year_taxes,
             'landford_insurance': self.landford_insurance
         }
-        data_output.generate_report(
+        html_report = data_output.generate_report(
             self.general_analysis_and_results, 
             self.data, 
             plot_data,
             property_data
         )
+        self.saveAsPDF(html_report)
         QMessageBox.information(self, "Report Generated", "Report has been Generated successfully.", QMessageBox.Ok)
-        
+
 
     def show_message(self, message, details=None, msg_type="info"):
         msg = QMessageBox()
