@@ -8,6 +8,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QCheckBox
 from custom_qlineedit import MyQlineEdit
 import resources
 
@@ -83,6 +84,7 @@ class Ui_MainWindow(object):
 "}")
         self.Tabs.setTabsClosable(False)
         self.Tabs.setObjectName("Tabs")
+        # Property Tab
         self.Property_Tab = QtWidgets.QWidget()
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -1355,44 +1357,95 @@ class Ui_MainWindow(object):
         self.selling_costs_input.setObjectName("selling_costs_input")
         self.gridLayout_3.addWidget(self.selling_costs_input, 3, 1, 1, 1)
         self.Tabs.addTab(self.Assumptions_Tab, "")
+
+        # Generate Report Tab start here
         self.Report_Tab = QtWidgets.QWidget()
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(14)
         self.Report_Tab.setFont(font)
         self.Report_Tab.setObjectName("Report_Tab")
-        self.report_Header = QtWidgets.QLabel(self.Report_Tab)
-        self.report_Header.setGeometry(QtCore.QRect(320, 20, 371, 51))
+
         font = QtGui.QFont()
         font.setFamily("Gill Sans MT Condensed")
         font.setPointSize(36)
         font.setBold(False)
         font.setWeight(50)
-        self.report_Header.setFont(font)
-        self.report_Header.setAlignment(QtCore.Qt.AlignCenter)
-        self.report_Header.setObjectName("report_Header")
+
         self.Logo_report = QtWidgets.QLabel(self.Report_Tab)
-        self.Logo_report.setGeometry(QtCore.QRect(0, 0, 121, 101))
+        self.Logo_report.setGeometry(QtCore.QRect(150, 30, 270, 250))
         self.Logo_report.setText("")
         self.Logo_report.setPixmap(QtGui.QPixmap(":/newPrefix/SFI-white.png"))
         self.Logo_report.setScaledContents(True)
         self.Logo_report.setObjectName("Logo_report")
-        self.Report_Progress = QtWidgets.QProgressBar(self.Report_Tab)
-        self.Report_Progress.setGeometry(QtCore.QRect(260, 320, 471, 31))
+
+        self.report_Header = QtWidgets.QLabel(self.Report_Tab)
+        self.report_Header.setGeometry(QtCore.QRect(450, 120, 500, 70))
+        self.report_Header.setFont(font)
+        self.report_Header.setAlignment(QtCore.Qt.AlignLeft)
+        self.report_Header.setObjectName("report_Header")
+
         font = QtGui.QFont()
         font.setFamily("Gill Sans MT")
-        font.setPointSize(16)
+        font.setPointSize(14)
+
+        self.description_label = QtWidgets.QLabel(self.Report_Tab)
+        self.description_label.setGeometry(QtCore.QRect(450, 220, 500, 50))
+        self.description_label.setFont(font)
+        self.description_label.setAlignment(QtCore.Qt.AlignLeft)
+        self.description_label.setObjectName("report_Header")
+        self.description_label.setText("Select the items to be included in the report.")
+
+        font = QtGui.QFont()
+        font.setFamily("Gill Sans MT")
+        font.setPointSize(10)
+
+        self.description_line = QtWidgets.QLabel(self.Report_Tab)
+        self.description_line.setGeometry(QtCore.QRect(450, 230, 500, 50))
+        self.description_line.setFont(font)
+        self.description_line.setAlignment(QtCore.Qt.AlignLeft)
+        self.description_line.setObjectName("report_Header")
+        self.description_line.setStyleSheet("QLabel{color: gray}")
+        self.description_line.setText("________________________________________________________________________________________")
+
+        font = QtGui.QFont()
+        font.setFamily("Gill Sans MT")
+        font.setPointSize(12)
+
+        # Additional Report Checkboxs
+        self.additional_graphs_check = QCheckBox("Generate Additional Graphs", self.Report_Tab)
+        self.additional_graphs_check.move(450, 280)
+        self.additional_graphs_check.setFont(font)
+
+        self.fullProForma_check = QCheckBox("Generate Full ProForma", self.Report_Tab)
+        self.fullProForma_check.move(450, 310)
+        self.fullProForma_check.setFont(font)
+
+        self.amortization_schedule_check = QCheckBox("Generate Amortization Schedule", self.Report_Tab)
+        self.amortization_schedule_check.move(450, 340)
+        self.amortization_schedule_check.setFont(font)
+
+        self.load_images_check = QCheckBox("Attach Loaded Images", self.Report_Tab)
+        self.load_images_check.move(450, 370)
+        self.load_images_check.setFont(font)
+
+        self.Report_Progress = QtWidgets.QProgressBar(self.Report_Tab)
+        self.Report_Progress.setGeometry(QtCore.QRect(450, 500, 500, 31))
         self.Report_Progress.setFont(font)
         self.Report_Progress.setAutoFillBackground(True)
         self.Report_Progress.setProperty("value", 0)
         self.Report_Progress.setObjectName("Report_Progress")
-        self.Generate_Report = QtWidgets.QPushButton(self.Report_Tab)
-        self.Generate_Report.setGeometry(QtCore.QRect(280, 240, 311, 41))
+        # self.Report_Progress.setStyleSheet("QProgressBar{border: 0.5px solid green; }")
+
+
         font = QtGui.QFont()
         font.setFamily("Gill Sans MT Condensed")
         font.setPointSize(18)
         font.setBold(False)
-        font.setWeight(50)
+        font.setWeight(40)
+
+        self.Generate_Report = QtWidgets.QPushButton(self.Report_Tab)
+        self.Generate_Report.setGeometry(QtCore.QRect(450, 460, 500, 30))
         self.Generate_Report.setFont(font)
         self.Generate_Report.setStyleSheet("QPushButton{\n"
 "border: 0.5px solid black;\n"
@@ -1414,6 +1467,10 @@ class Ui_MainWindow(object):
         self.Generate_Report.setFlat(False)
         self.Generate_Report.setObjectName("Generate_Report")
         self.Tabs.addTab(self.Report_Tab, "")
+
+        # Menu Bar and its components initializationa
+        # Menu File and Menu About QMenus and Other components
+        #
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1282, 31))
@@ -1677,7 +1734,7 @@ class Ui_MainWindow(object):
         self.Selling_Costs.setText(_translate("MainWindow", "SELLING COSTS (%):"))
         self.selling_costs_input.setPlaceholderText(_translate("MainWindow", "selling cost"))
         self.Tabs.setTabText(self.Tabs.indexOf(self.Assumptions_Tab), _translate("MainWindow", "Assumptions"))
-        self.report_Header.setText(_translate("MainWindow", "REPORT"))
+        self.report_Header.setText(_translate("MainWindow", "Generate Report"))
         self.Generate_Report.setAccessibleDescription(_translate("MainWindow", "<html><head/><body><p>Click to load images into the report.</p></body></html>"))
         self.Generate_Report.setText(_translate("MainWindow", "GENERATE REPORT"))
         self.Tabs.setTabText(self.Tabs.indexOf(self.Report_Tab), _translate("MainWindow", "Report"))

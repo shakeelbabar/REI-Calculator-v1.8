@@ -2,9 +2,7 @@ def loan_payment(rate, term, present_value):
     # calculates the loan payment
     monthly_rate = rate / 12
     term_months = term * 12
-    payment     = present_value * \
-        (monthly_rate * pow(1 + monthly_rate, term_months)) / \
-            (pow(1 + monthly_rate,term_months)-1)
+    payment     = present_value * (monthly_rate * pow(1 + monthly_rate, term_months)) / (pow(1 + monthly_rate,term_months)-1)
     return payment
 
 def calculate_dollar_amount(base_amount, percentage):

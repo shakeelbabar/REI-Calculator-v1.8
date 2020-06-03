@@ -6,7 +6,6 @@ import re
 from collections import defaultdict
 from random import randint
 from pandas import DataFrame
-import matplotlib.pyplot as plt
 
 from gui2 import Ui_MainWindow
 from settings_window import Ui_SettingsDialog
@@ -81,15 +80,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     data = None
     # data without format (decimal separator, percent, dollar,...)
     tmp_data = None
-
-    # data for thirty year proforma
-    data_thirty_years = None
-    # data without format (decimal separator, percent, dollar,...)
-    data_thirty_years_tmp = None
-
-    tab1data = None
-    tab2data = None
-
+    
     general_analysis_and_results = None
     
     # property info
@@ -154,14 +145,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     selling_costs = 0
     prop_appreciation = 0
 
-
-    # full ProForma values
-    fixed_monthly = 0
-    fixed_yearly = 0
-    NOI = 0
-    cash_2_close = 0
-    payment = 0;
-
+    
+    
     def __init__(self):
         super(CalculatorWindow, self).__init__()
         self.ui = Ui_MainWindow()
@@ -172,12 +157,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         
         # init data structures
         self.data = defaultdict(list)        
-        self.tmp_data = defaultdict(list)
-        self.data_thirty_years = defaultdict(list)
-        self.data_thirty_years_tmp = defaultdict(list)
-        self.tab1data = defaultdict(list)
-        self.tab2data = defaultdict(list)
-
+        self.tmp_data = defaultdict(list)        
+        
         self.auto_calculations()
         self.update_total_exp_auto()
         
@@ -720,16 +701,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # d.resize(400,500)
         d.exec_()
 
-    def load_images(self):
-        import PyQt5
-        options = PyQt5.QtWidgets.QFileDialog.Options()
-        options |= PyQt5.QtWidgets.QFileDialog.DontUseNativeDialog
-        self.property_images, _ = PyQt5.QtWidgets.QFileDialog.getOpenFileNames(None, "Open File", "",
-                                                                  "All files (*.*)", options=options)
-        if self.property_images:
-            print(self.property_images)
-            print(len(self.property_images))
-
     def focused_field(self, ui_control, ftype='dollar'):
         if ftype == 'dollar':
             self.set_decimal_format(ui_control)
@@ -763,7 +734,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.actionSave.triggered.connect(self.saveFile)
         self.ui.actionSave_As.triggered.connect(self.saveFile)
         self.ui.actionExecute.triggered.connect(self.generate_report)
-        self.ui.Load_Images.clicked.connect(self.load_images)
         self.ui.actionExit.triggered.connect(self.exit)
         self.ui.actionAbout_REI_Calculator.triggered.connect(self.showAbout)
         # auto fields
@@ -1388,7 +1358,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.loan_amount_auto_2.setText(str(self.loan_amount_auto))
         
     def interest_rate_changed(self, value):
-        self.int_rate = value / 100
+        self.int_rate = value / 100        
         #self.calculate_loan_amount()
 
     def term_years_changed(self, value):
@@ -1480,298 +1450,17 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.show_message(message="Wrong value for cap. ex", 
                               msg_type="warning")
 
-    def fullProForma(self):
-        self.data_thirty_years = defaultdict(list)
-        # Will show a full 30-Year Pro Forma Statement - Table
-        # Set initial values
-        cum_NIAF = 0
-        cum_CoCR = 0
-        length_yrs = range(1, 31)
-
-        for year_index in length_yrs:
-            print("year iteration ",year_index)
-            # Everything will be on a yearly scale and we may calculate some
-            # variables two time for this first year
-
-            # Calculate total annual income for each year
-            try:
-                tot_income_annual = REI_Calculations.future_value(
-                    self.rent_appreciation, year_index - 1, 0, \
-                                            self.total_income_monthly * 12
-                )
-            except ZeroDivisionError:
-                _, _, tb = sys.exc_info()
-                self.show_message(message='tot_income_anual, future_value(...)',
-                                  details=f'Line: {tb.tb_lineno},\n {str(ex)}',
-                                  msg_type='warning')
-                break
-
-            try:
-                # Calculate total fixed expenses for each year
-                fixed_yearly = REI_Calculations.future_value(
-                    self.exp_appreciation, year_index - 1, 0, self.fixed_monthly * 12
-                )
-            except ZeroDivisionError:
-                _, _, tb = sys.exc_info()
-                self.show_message(message='fixed_yearly, future_value(...)',
-                                  details=f'Line: {tb.tb_lineno},\n {str(ex)}',
-                                  msg_type='warning')
-                break
-
-            print("var_yearly")
-            # Calculate total variable expenses for each year
-            var_yearly = tot_income_annual * sum(
-                [self.rep_and_main, self.cap_ex, self.vacancy, self.management]
-            )
-
-            # Calculate Total Expenses
-            tot_expense_yearly = sum([fixed_yearly, var_yearly])
-
-            print("NOI")
-            # Calculate NOI
-            NOI_inLoop = REI_Calculations.NOI_yearly(
-                tot_income_annual, fixed_yearly, var_yearly
-            )
-            print("NOI Growth")
-            print("NOI inLoop: ",NOI_inLoop)
-            print("NOI : ",self.NOI)
-            NOI_growth = REI_Calculations.growth_rate(
-                NOI_inLoop, self.NOI, year_index
-            )
-            print("NOI inGrowth: ",NOI_growth)
-            print("Debt Service")
-            # Calculate Debt service
-
-            # temporary payment value
-            # payment = 567890
-            if self.term < year_index:
-                self.payment = 0
-            # print(payment," is payment")
-            payment_annual = self.payment * 12
-
-            # print("payment; ", payment_annual)
-
-            # Calculate NIAF
-            NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, self.payment)
-
-            print('NIAF:', NIAF)
-
-            # Calculate Property Value
-            prop_value = REI_Calculations.future_value(
-                self.prop_appreciation, year_index - 1, 0, self.arv
-            )
-            print("prop value: ", prop_value)
-            # Calculate Cash on Cash Return
-            CoCR = REI_Calculations.cash_on_cash_return(NIAF, self.cash_2_close)
-
-            print("CoCR")
-            # Calculate cumulative CoCR
-            cum_CoCR = cum_CoCR + CoCR
-
-            print("NIAF")
-            # Calculate cumulative NIAF
-            cum_NIAF = cum_NIAF + NIAF
-
-            print("loan balance")
-            # Calculate future loan balance
-            loan_balance = REI_Calculations.future_value(
-                self.int_rate / 12, year_index * 12, self.payment, self.loan_amount_auto
-            )
-            # Calculate total equity owned by investor
-            tot_equity = REI_Calculations.future_equity(prop_value, loan_balance)
-
-            # Calculate percent of equity owned by the investor
-            equity_perc = tot_equity / prop_value
-
-            print("ROI")
-            # Calculate ROI
-            ROI = REI_Calculations.return_on_investment(
-                tot_equity, cum_NIAF, self.cash_2_close
-            )
-
-            # Calculate profit if sold
-            total_profit_sold = REI_Calculations.tot_profit_sold(
-                prop_value, self.selling_costs, loan_balance, self.cash_2_close,
-                cum_NIAF  # , self.downpayment_dollar
-            )
-
-            # Calculate the compounded annual growth rate (CAGR) if sold
-            CAGR = REI_Calculations.growth_rate(
-                total_profit_sold + self.cash_2_close, self.cash_2_close, year_index
-            )
-
-            print("temp Data for year: ",year_index)
-
-            self.data_thirty_years_tmp[f'Year_{year_index}'] = [
-                tot_income_annual, tot_expense_yearly, fixed_yearly,
-                var_yearly, NOI_inLoop, NOI_growth,
-                loan_balance, NIAF, prop_value,
-                CoCR, cum_CoCR, tot_equity,
-                equity_perc, ROI, total_profit_sold,
-                CAGR
-            ]
-
-            # TODO: remove after testing
-            # self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
-            print("formatting values")
-            # format numbers to two decimal values
-            tot_income_annual = '{:0,.2f}'.format(tot_income_annual)
-            tot_expense_yearly = '{:0,.2f}'.format(tot_expense_yearly)
-            fixed_yearly = '{:0,.2f}'.format(fixed_yearly)
-            var_yearly = '{:0,.2f}'.format(var_yearly)
-            NOI_inLoop = '{:0,.2f}'.format(NOI_inLoop)
-            NOI_growth = '{:0,.2f}'.format(NOI_growth)
-            loan_balance = '{:0,.2f}'.format(loan_balance)
-            NIAF = '{:0,.2f}'.format(NIAF)
-            prop_value = '{:0,.2f}'.format(prop_value)
-            tot_equity = '{:0,.2f}'.format(tot_equity)
-            ROI = '{:0,.2f}'.format(ROI)
-            total_profit_sold = '{:0,.2f}'.format(total_profit_sold)
-            equity_perc = '{:0,.2f}'.format(equity_perc)
-            format_CoCR = '{:0,.2f}'.format(CoCR)
-            format_cum_CoCR = '{:0,.2f}'.format(cum_CoCR)
-            try:
-                format_CAGR = '{:0,.2f}'.format(CAGR)
-            except ValueError as ex:
-                print("run_calculations: CAGR exception: ", ex)
-                format_CAGR = CAGR
-
-            print("set data index for :", year_index )
-            self.data_thirty_years[f'Year_{year_index}'] = [
-                f'${tot_income_annual}', f'${tot_expense_yearly}', f'${fixed_yearly}',
-                f'${var_yearly}', f'${NOI_inLoop}', f'{NOI_growth}%',
-                f'${loan_balance}', f'${NIAF}', f'${prop_value}',
-                f'{format_CoCR}%', f'{format_cum_CoCR}%', f'${tot_equity}',
-                f'{equity_perc}%', f'{ROI}%', f'${total_profit_sold}',
-                f'{format_CAGR}%'
-            ]
-        print("30 Years Proforma:\n",self.data_thirty_years)
-
-    def amoritzationSchedule(self):
-        # Will show the amoritzation schedule of the financing for 30 years
-        # I want two tables to be outputed
-        # Table 1: first two years break down (monthly)
-        # Table 2: 30-year break down (yearly)
-        # will want the following items outputed in the table:
-        # Payment period, Starting Principle, Interest Paid, Principle Paid
-        # Total Interest Paid, Total Principle Paid, Total Paid, Loan Balance
-
-        print("in amortization")
-
-        # Clear out the tables for amoritzation
-        self.tab1data = defaultdict(list)
-        self.tab2data = defaultdict(list)
-
-        print("after reseting tables")
-        # Set the initial values
-        beginning_princ = self.loan_amount_auto
-        last_year = self.term_years
-        tot_int_paid = 0
-        tot_princ_paid = 0
-
-        print("values set")
-
-        for monthIn in range(1, 361):
-            print("iteration :", monthIn)
-            # 361 is the total number of periods in 30 years
-            # need to create two tables
-
-            # Period number
-            payment_period = monthIn
-            # ending balance of the
-            ending_princ = REI_Calculations.future_value(self.int_rate / 12, monthIn, payment_period, self.loan_amount_auto)
-            # Principle paid down for this period
-            princ_paid = beginning_princ - ending_princ
-            # interest paid in this pay period
-            int_paid = payment_period - princ_paid
-            # Total interest paid
-            tot_int_paid = tot_int_paid + int_paid
-            # Total Principle Paid
-            tot_princ_paid = tot_princ_paid + princ_paid
-
-            print("calculation done")
-            # Create the table objects
-            if monthIn < 25:
-                # This is table 1 monthly results for the first two years
-                print("paymner period: ",payment_period)
-                monthly_per = '{:0,.0f}'.format(payment_period)
-                monthly_beg_princ = '{:0,.2f}'.format(beginning_princ)
-                monthly_int_paid = '{:0,.2f}'.format(int_paid)
-                monthly_princ_paid = '{:0,.2f}'.format(princ_paid)
-                monthly_tot_int = '{:0,.2f}'.format(tot_int_paid)
-                monthly_tot_princ = '{:0,.2f}'.format(tot_princ_paid)
-                monthly_end_princ = '{:0,.2f}'.format(ending_princ)
-
-                print("inserting into table at :",monthly_per)
-                # Starting Principle, Interest Paid, Principle Paid
-                # Total Interest Paid, Total Principle Paid, Loan Balance
-                self.tab1data[f'Month_{monthly_per}'] = [
-                    f'${monthly_beg_princ}', f'${monthly_int_paid}', f'${monthly_princ_paid}',
-                    f'${monthly_tot_int}', f'${monthly_tot_princ}', f'${monthly_end_princ}'
-                ]
-            if (monthIn % 12 == 0) and monthIn > 24:
-                # This is table 2, yearly resuts for thirty years
-                print("payment period :",payment_period/12)
-                yearly_per = '{:0,.0f}'.format(payment_period / 12)
-                yearly_beg_princ = '{:0,.2f}'.format(beginning_princ)
-                yearly_int_paid = '{:0,.2f}'.format(int_paid)
-                yearly_princ_paid = '{:0,.2f}'.format(princ_paid)
-                yearly_tot_int = '{:0,.2f}'.format(tot_int_paid)
-                yearly_tot_princ = '{:0,.2f}'.format(tot_princ_paid)
-                yearly_end_princ = '{:0,.2f}'.format(ending_princ)
-
-                print("inserting into table at :",yearly_per)
-                self.tab2data[f'Year_{yearly_per}'] = [
-                    f'${yearly_beg_princ}', f'${yearly_int_paid}', f'${yearly_princ_paid}',
-                    f'${yearly_tot_int}', f'${yearly_tot_princ}', f'${yearly_end_princ}'
-                ]
-
-            beginning_princ = ending_princ
 
     def generate_report(self):
-
         if not self.validate_values():
             return
-
-        if self.ui.additional_graphs_check.isChecked():
-            from Graphs import Graphs
-            Graphs.montheExpense_PieChart(int(self.total_fixed_expense), int(self.total_variable_expense))
-            Graphs.monthlyIncome_PieChart(int(self.total_rent_monthly), int(self.other_income))
-            Graphs.fiftyRule_BarGraph(int(self.total_income_monthly))
-            Graphs.onePercent_Rule(int(self.total_income_monthly), int(self.purchase_price), int(self.rehab_budget))
-            Graphs.seventyPercent_Chart(int(self.arv), int(self.rehab_budget), int(self.purchase_price))
-
         # self.init_fake_values()
         self.run_calculations()
-        if self.ui.fullProForma_check.isChecked():
-            self.fullProForma()
-        else:
-            self.data_thirty_years = None
-
-        if self.ui.amortization_schedule_check.isChecked():
-            self.amoritzationSchedule()
-        else:
-            self.tab1data = None
-            self.tab2data = None
-
-        if self.ui.load_images_check.isChecked():
-            prop_images = self.property_images
-        else:
-            prop_images = None
-
         if not self.data:
             print("No data after calculations")
             return
-
-        if self.data_thirty_years == None:
-            print("No data for Full Proforma")
         # dataframe for plotting three totals
-        print("here plot")
         plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
-
-        # # dataframe for plotting three totals
-        # plot_data_thiity_years = DataFrame.from_dict(self.data_thirty_years_tmp).iloc[[0,1,7], :]
-        print("after plot")
         property_data = {
             'address': self.address,
             'city': self.city,
@@ -1780,20 +1469,15 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             'prior_year_taxes': self.prior_year_taxes,
             'landford_insurance': self.landford_insurance
         }
-        print("property data..")
         html_report = data_output.generate_report(
             self.general_analysis_and_results, 
-            self.data,
-            self.data_thirty_years,
+            self.data, 
             plot_data,
-            property_data,
-            self.tab1data,
-            self.tab2data,
-            prop_images
+            property_data
         )
-        if(html_report):
-            # self.saveAsPDF(html_report)
-            QMessageBox.information(self, "Report Generated", "Report has been Generated successfully.", QMessageBox.Ok)
+        self.saveAsPDF(html_report)
+        QMessageBox.information(self, "Report Generated", "Report has been Generated successfully.", QMessageBox.Ok)
+
 
     def show_message(self, message, details=None, msg_type="info"):
         msg = QMessageBox()
@@ -1822,7 +1506,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
         # Begin by calculating the monthly payment of the loan
         try:            
-            self.payment = REI_Calculations.loan_payment(
+            payment = REI_Calculations.loan_payment(
                 self.int_rate, self.term, self.loan_amount
             )
         except Exception as ex:
@@ -1845,7 +1529,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # Cap Rate      1% Rule        Gross Rent Mult.
 
         # Calculate the fixed and variable expenses
-        self.fixed_monthly, self.fixed_yearly = REI_Calculations.fixed_expenses_monthly(
+        fixed_monthly, fixed_yearly = REI_Calculations.fixed_expenses_monthly(
             self.electric, self.WandS, self.PMI, 
             self.garbage, self.HOA, self.insurance, 
             self.taxes, self.other_fixed_expense
@@ -1857,19 +1541,19 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         )
 
         # 1 Calculate NOI
-        self.NOI = REI_Calculations.NOI_yearly(
-            self.total_income_monthly * 12, self.fixed_yearly, var_yearly
+        NOI = REI_Calculations.NOI_yearly(
+            self.total_income_monthly * 12, fixed_yearly, var_yearly
         )
 
 
         # 2,3 Calculate Monthly and yearly NIAF or monthly cash flows
         cf_monthly = REI_Calculations.cash_flow_monthly(
-            self.total_income_monthly, self.payment, self.fixed_monthly, var_monthly
+            self.total_income_monthly, payment, fixed_monthly, var_monthly
         )
-        NIAF = REI_Calculations.NIAF_yearly(self.NOI, self.payment)
+        NIAF = REI_Calculations.NIAF_yearly(NOI, payment)
 
         # 4 Calculate the cash to close
-        self.cash_2_close = REI_Calculations.cash_to_close(
+        cash_2_close = REI_Calculations.cash_to_close(
             self.downpayment_dollar,
             self.closing_costs,
             self.emergency_fund,
@@ -1878,11 +1562,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         )
 
         # 5 Calculate Cash on Cash Return (CoCR)
-        CoCR = REI_Calculations.cash_on_cash_return(NIAF, self.cash_2_close)
+        CoCR = REI_Calculations.cash_on_cash_return(NIAF, cash_2_close)
 
         # 6 Calculate the cap rate
         try:
-            capRate = REI_Calculations.cap_rate(self.NOI, self.purchase_price, self.rehab_budget, self.closing_costs)
+            capRate = REI_Calculations.cap_rate(NOI, self.purchase_price, self.rehab_budget, self.closing_costs)
         except Exception as ex:
             _, _, tb = sys.exc_info()
             self.show_message(message='Run calculations', 
@@ -1907,22 +1591,22 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.purchase_price, self.rehab_budget, self.total_income_monthly
         )
         fifty_perc = REI_Calculations.fifty_perc_rule(
-            self.fixed_monthly, var_monthly, self.total_income_monthly
+            fixed_monthly, var_monthly, self.total_income_monthly
         )
                
         self.general_analysis_and_results = [
-            [
-                '${:0,.2f}'.format(self.cash_2_close),
+            [ 
+                '${:0,.2f}'.format(cash_2_close),  
                 '${:0,.2f}'.format(self.purchase_price), 
                 '${:0,.2f}'.format(self.total_income_monthly)
             ], 
             [ 
-                '${:0,.2f}'.format(var_monthly + self.fixed_monthly),
+                '${:0,.2f}'.format(var_monthly + fixed_monthly), 
                 '${:0,.2f}'.format(cf_monthly), 
                 '{:0,.2f}%'.format(one_perc)
             ], 
             [ 
-                '${:0,.2f}'.format(self.NOI),
+                '${:0,.2f}'.format(NOI),  
                 '${:0,.2f}'.format(NIAF), 
                 '{:0,.2f}%'.format(CoCR)
             ],
@@ -1966,7 +1650,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             try:
                 # Calculate total fixed expenses for each year
                 fixed_yearly = REI_Calculations.future_value(
-                    self.exp_appreciation, year_index - 1, 0, self.fixed_monthly * 12
+                    self.exp_appreciation, year_index - 1, 0, fixed_monthly * 12
                 )
             except ZeroDivisionError:
                 _, _, tb = sys.exc_info()
@@ -1990,18 +1674,18 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             )
 
             NOI_growth = REI_Calculations.growth_rate( 
-                NOI_inLoop, self.NOI, year_index
+                NOI_inLoop, NOI, year_index
                 )
 
             # Calculate Debt service
             if self.term < year_index:
-                self.payment = 0
-            payment_annual = self.payment * 12
+                payment = 0
+            payment_annual = payment * 12
 
             #print('NOI:', NOI, 'payment:', payment)
             
             # Calculate NIAF
-            NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, self.payment)
+            NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, payment)
             
             #print('NIAF:', NIAF)
             
@@ -2011,7 +1695,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             )
 
             # Calculate Cash on Cash Return
-            CoCR = REI_Calculations.cash_on_cash_return(NIAF, self.cash_2_close)
+            CoCR = REI_Calculations.cash_on_cash_return(NIAF, cash_2_close)
 
             # Calculate cumulative CoCR
             cum_CoCR = cum_CoCR + CoCR
@@ -2021,7 +1705,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate future loan balance
             loan_balance = REI_Calculations.future_value(
-                self.int_rate/12, year_index*12, self.payment, self.loan_amount_auto
+                self.int_rate/12, year_index*12, payment, self.loan_amount_auto
             )
             # Calculate total equity owned by investor
             tot_equity = REI_Calculations.future_equity(prop_value, loan_balance)
@@ -2031,19 +1715,19 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # Calculate ROI
             ROI = REI_Calculations.return_on_investment(
-                tot_equity, cum_NIAF, self.cash_2_close
+                tot_equity, cum_NIAF, cash_2_close
             )
 
             # Calculate profit if sold
             total_profit_sold = REI_Calculations.tot_profit_sold(
-                prop_value, self.selling_costs, loan_balance, self.cash_2_close,
+                prop_value, self.selling_costs, loan_balance, cash_2_close, 
                 cum_NIAF#, self.downpayment_dollar
             )
             
            
             # Calculate the compounded annual growth rate (CAGR) if sold
             CAGR = REI_Calculations.growth_rate(
-                total_profit_sold + self.cash_2_close, self.cash_2_close, year_index
+                total_profit_sold + cash_2_close, cash_2_close, year_index
             )
             
             self.tmp_data[f'Year_{year_index}'] = [
@@ -2090,289 +1774,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 f'{format_CAGR}%'
             ]
 
-
-    def additionalGraphs(self):
-        from Graphs import Graphs
-        # Will show additional graphs,
-            # Monthly expenses
-            # Monthly Income
-            # 50% Rule
-            # 1% Rule
-            # 70% Rule
-
-        ## Monthly Expenses Break Down - Pie Chart
-        # Show all fixed and variable expenses in a Pie Chart
-        # Have a legend with the breakdown of fixed expenses percentage vs variable expense percentage
-        # total_expenses  = self.total_fixed_expense + self.total_variable_expense
-        # fixed_perc      = '{0:.02f}%'.format((self.total_fixed_expense / total_expenses)*100)
-        # var_perc        = '{0:.02f}%'.format((self.total_variable_expense / total_expenses)*100)
-        # print("calling")
-        Graphs.montheExpense_PieChart(int(self.total_fixed_expense), int(self.total_variable_expense))
-        # print("success")
-
-        ## Monthly Income Break Down - Pie Chart
-        # Show all income sources in a Pie Chart
-        # Have a legend with the breakdown of rental income percentage and other income percentage
-        rental_income_perc  = self.total_rent_monthly / self.total_income_monthly
-        other_income_perc   = self.other_income_month / self.total_income_monthly
-
-
-        ## 50% Rule - Bar Graph
-        half_of_income = self.total_income_monthly / 2
-        # Note: the second bar is 'total_expenses'
-
-        # Create a horizontal bar graph 
-            # x-axis as ($)
-            # y-axis as Names: {'50% of Monthly Income' 'Total Monthly Expenses'}
-        # If possible, on the right side of each bar I would like to show the percentages of each
-        half_of_income_perc = half_of_income / self.total_income_monthly * 100
-        total_expenses_perc = total_expenses / self.total_income_monthly * 100
-
-        ## 1% Rule - Bar Graph
-        one_perc_goal   = 1 # need this to be 1%
-        one_perc_act    = self.total_income_monthly / \
-            sum(self.purchase_price, self.rehab_budget)
-        # Create a horizontal bar graph
-            # x-axis as (%)
-            # y-axis as Names: {'1% Monthly Income Goal' 'Actual Monthly Income Percentage'}
-        # If possible, on the right side of of each bar I would like to show ($) amount
-        one_perc_goal_doll  = sum(self.purchase_price, self.rehab_budget) * .01
-        one_perc_act_doll   = self.total_income_monthly
-
-
-        ## 70% Rule - Bar Graph
-        # This is the rule to say that our max offer should be 70% of the ARV - any repairs needed
-        max_offer_price     = (self.arv * .70) - self.rehab_budget
-        act_offer_price     = self.purchase_price
-        # Create a horizontal bar graph
-            # x-axis as ($)
-            # y-axis as Names: {'Max Offer Price' 'Actual Offer Price'}
-        # If possible, on the right side of each bar I would like to show the percentage
-        max_offer_perc      = 70 # as a percentage - 70%
-        act_offer_perc      = sum(self.purchase_price, self.rehab_budget) / self.arv
-        print("completed")
-        
-    # def fullProForma(self):
-    #     # Will show a full 30-Year Pro Forma Statement - Table
-    #     # Set initial values
-    #     cum_NIAF = 0
-    #     cum_CoCR = 0
-    #     length_yrs = range(1, 31)
-    #
-    #     for year_index in length_yrs:
-    #         # Everything will be on a yearly scale and we may calculate some
-    #         # variables two time for this first year
-    #
-    #         # Calculate total annual income for each year
-    #         try:
-    #             tot_income_annual = REI_Calculations.future_value(
-    #                 self.rent_appreciation, year_index - 1, 0, \
-    #                     self.total_income_monthly * 12
-    #             )
-    #         except ZeroDivisionError:
-    #             _, _, tb = sys.exc_info()
-    #             self.show_message(message='tot_income_anual, future_value(...)',
-    #                             details=f'Line: {tb.tb_lineno},\n {str(ex)}',
-    #                             msg_type='warning')
-    #             break
-    #
-    #         try:
-    #             # Calculate total fixed expenses for each year
-    #             fixed_yearly = REI_Calculations.future_value(
-    #                 self.exp_appreciation, year_index - 1, 0, fixed_monthly * 12
-    #             )
-    #         except ZeroDivisionError:
-    #             _, _, tb = sys.exc_info()
-    #             self.show_message(message='fixed_yearly, future_value(...)',
-    #                             details=f'Line: {tb.tb_lineno},\n {str(ex)}',
-    #                             msg_type='warning')
-    #             break
-    #
-    #
-    #         # Calculate total variable expenses for each year
-    #         var_yearly = tot_income_annual * sum(
-    #             [self.rep_and_main, self.cap_ex, self.vacancy, self.management]
-    #         )
-    #
-    #         # Calculate Total Expenses
-    #         tot_expense_yearly = sum([fixed_yearly, var_yearly])
-    #
-    #         # Calculate NOI
-    #         NOI_inLoop = REI_Calculations.NOI_yearly(
-    #             tot_income_annual, fixed_yearly, var_yearly
-    #         )
-    #
-    #         NOI_growth = REI_Calculations.growth_rate(
-    #             NOI_inLoop, NOI, year_index
-    #             )
-    #
-    #         # Calculate Debt service
-    #         if self.term < year_index:
-    #             payment = 0
-    #         payment_annual = payment * 12
-    #
-    #         #print('NOI:', NOI, 'payment:', payment)
-    #
-    #         # Calculate NIAF
-    #         NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, payment)
-    #
-    #         #print('NIAF:', NIAF)
-    #
-    #         # Calculate Property Value
-    #         prop_value = REI_Calculations.future_value(
-    #             self.prop_appreciation, year_index - 1, 0, self.arv
-    #         )
-    #
-    #         # Calculate Cash on Cash Return
-    #         CoCR = REI_Calculations.cash_on_cash_return(NIAF, cash_2_close)
-    #
-    #         # Calculate cumulative CoCR
-    #         cum_CoCR = cum_CoCR + CoCR
-    #
-    #         # Calculate cumulative NIAF
-    #         cum_NIAF = cum_NIAF + NIAF
-    #
-    #         # Calculate future loan balance
-    #         loan_balance = REI_Calculations.future_value(
-    #             self.int_rate/12, year_index*12, payment, self.loan_amount_auto
-    #         )
-    #         # Calculate total equity owned by investor
-    #         tot_equity = REI_Calculations.future_equity(prop_value, loan_balance)
-    #
-    #         # Calculate percent of equity owned by the investor
-    #         equity_perc = tot_equity / prop_value
-    #
-    #         # Calculate ROI
-    #         ROI = REI_Calculations.return_on_investment(
-    #             tot_equity, cum_NIAF, cash_2_close
-    #         )
-    #
-    #         # Calculate profit if sold
-    #         total_profit_sold = REI_Calculations.tot_profit_sold(
-    #             prop_value, self.selling_costs, loan_balance, cash_2_close,
-    #             cum_NIAF#, self.downpayment_dollar
-    #         )
-    #
-    #
-    #         # Calculate the compounded annual growth rate (CAGR) if sold
-    #         CAGR = REI_Calculations.growth_rate(
-    #             total_profit_sold + cash_2_close, cash_2_close, year_index
-    #         )
-    #
-    #         self.tmp_data[f'Year_{year_index}'] = [
-    #             tot_income_annual, tot_expense_yearly, fixed_yearly,
-    #             var_yearly, NOI_inLoop, NOI_growth,
-    #             loan_balance, NIAF, prop_value,
-    #             CoCR, cum_CoCR, tot_equity,
-    #             equity_perc, ROI, total_profit_sold,
-    #             CAGR
-    #         ]
-    #
-    #         # TODO: remove after testing
-    #         #self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
-    #
-    #         # format numbers to two decimal values
-    #         tot_income_annual = '{:0,.2f}'.format(tot_income_annual)
-    #         tot_expense_yearly = '{:0,.2f}'.format(tot_expense_yearly)
-    #         fixed_yearly = '{:0,.2f}'.format(fixed_yearly)
-    #         var_yearly = '{:0,.2f}'.format(var_yearly)
-    #         NOI_inLoop = '{:0,.2f}'.format(NOI_inLoop)
-    #         NOI_growth = '{:0,.2f}'.format(NOI_growth)
-    #         loan_balance = '{:0,.2f}'.format(loan_balance)
-    #         NIAF = '{:0,.2f}'.format(NIAF)
-    #         prop_value = '{:0,.2f}'.format(prop_value)
-    #         tot_equity = '{:0,.2f}'.format(tot_equity)
-    #         ROI = '{:0,.2f}'.format(ROI)
-    #         total_profit_sold= '{:0,.2f}'.format(total_profit_sold)
-    #         equity_perc = '{:0,.2f}'.format(equity_perc)
-    #         format_CoCR = '{:0,.2f}'.format(CoCR)
-    #         format_cum_CoCR = '{:0,.2f}'.format(cum_CoCR)
-    #         try:
-    #             format_CAGR = '{:0,.2f}'.format(CAGR)
-    #         except ValueError as ex:
-    #             print("run_calculations: CAGR exception: ", ex)
-    #             format_CAGR = CAGR
-    #
-    #
-    #         self.data[f'Year_{year_index}'] = [
-    #             f'${tot_income_annual}', f'${tot_expense_yearly}', f'${fixed_yearly}',
-    #             f'${var_yearly}', f'${NOI_inLoop}', f'{NOI_growth}%',
-    #             f'${loan_balance}', f'${NIAF}', f'${prop_value}',
-    #             f'{format_CoCR}%' ,f'{format_cum_CoCR}%', f'${tot_equity}',
-    #             f'{equity_perc}%', f'{ROI}%', f'${total_profit_sold}',
-    #             f'{format_CAGR}%'
-    #         ]
-
-    # def amoritzationSchedule(self):
-    #     # Will show the amoritzation schedule of the financing for 30 years
-    #     # I want two tables to be outputed
-    #         # Table 1: first two years break down (monthly)
-    #         # Table 2: 30-year break down (yearly)
-    #     # will want the following items outputed in the table:
-    #     # Payment period, Starting Principle, Interest Paid, Principle Paid
-    #     # Total Interest Paid, Total Principle Paid, Total Paid, Loan Balance
-    #
-    #     # Set the initial values
-    #     beginning_princ = self.loan_amount_auto
-    #     last_year       = self.term_years
-    #     tot_int_paid    = 0
-    #     tot_princ_paid  = 0
-    #
-    #     for monthIn in range(0,361):
-    #         # 361 is the total number of periods in 30 years
-    #         # need to create two tables
-    #
-    #         # Period number
-    #         payment_period  = monthIn
-    #         # ending balance of the
-    #         ending_princ    = REI_Calculations.future_value(self.int_rate/12, \
-    #             monthIn, payment_period, self.loan_amount_auto)
-    #         # Principle paid down for this period
-    #         princ_paid      = beginning_princ - ending_princ
-    #         # interest paid in this pay period
-    #         int_paid        = payment_period - princ_paid
-    #         # Total interest paid
-    #         tot_int_paid    = tot_int_paid + int_paid
-    #         # Total Principle Paid
-    #         tot_princ_paid  = tot_princ_paid + princ_paid
-    #
-    #         # Create the table objects
-    #         if monthIn <= 25:
-    #             # This is table 1 monthly results for the first two years
-    #             monthly_per         = '{:0,.2f}'.format(payment_period)
-    #             monthly_beg_princ   = '{:0,.2f}'.format(beginning_princ)
-    #             monthly_int_paid    = '{:0,.2f}'.format(int_paid)
-    #             monthly_princ_paid  = '{:0,.2f}'.format(princ_paid)
-    #             monthly_tot_int     = '{:0,.2f}'.format(tot_int_paid)
-    #             monthly_tot_princ   = '{:0,.2f}'.format(tot_princ_paid)
-    #             monthly_end_princ   = '{:0,.2f}'.format(ending_princ)
-    #
-    #
-    #             self.tab1data[f'Year_{monthly_per}'] = [
-    #             f'${monthly_beg_princ}', f'${monthly_int_paid}', f'${monthly_princ_paid}',
-    #             f'${monthly_tot_int}', f'${monthly_tot_princ}', f'${monthly_end_princ}'
-    #             ]
-    #         if monthIn%12 == 0:
-    #             # This is table 2, yearly resuts for thirty years
-    #             yearly_per         = '{:0,.2f}'.format(payment_period/12)
-    #             yearly_beg_princ   = '{:0,.2f}'.format(beginning_princ)
-    #             yearly_int_paid    = '{:0,.2f}'.format(int_paid)
-    #             yearly_princ_paid  = '{:0,.2f}'.format(princ_paid)
-    #             yearly_tot_int     = '{:0,.2f}'.format(tot_int_paid)
-    #             yearly_tot_princ   = '{:0,.2f}'.format(tot_princ_paid)
-    #             yearly_end_princ   = '{:0,.2f}'.format(ending_princ)
-    #
-    #
-    #             self.tab2data[f'Year_{yearly_per}'] = [
-    #             f'${yearly_beg_princ}', f'${yearly_int_paid}', f'${yearly_princ_paid}',
-    #             f'${yearly_tot_int}', f'${yearly_tot_princ}', f'${yearly_end_princ}'
-    #             ]
-    #
-    #         beginning_princ = ending_princ
-
-    #def showImages(self):
-        # I want the program to load in images and store in the report
-        # if this checkbox is clicked
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

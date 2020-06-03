@@ -1,0 +1,42 @@
+Property_Tab
+Property_Address:Sukkur Town
+Property_City:Sukkur
+Property_State:DC
+Property_ZipCode:78600
+Property_PriorYearsTaxes:1000.0
+Property_LandLordInsurance:3000.0
+
+Purchase_Tab
+Purchase_AskingPrice: 25001.0
+Purchase_PurchasePrice: 2000001.0
+Purchase_FinanceRehab: Yes
+Purchase_RehabBudget: 500001.0
+Purchase_ARV: 3250001.0
+Purchase_ClosingCost: 35001.0
+Purchase_EmergencyFund: 50001.0
+Purchase_Downpayment(%): 30
+Purchase_Term: 31
+Purchase_AnnauLInterestRate: 4.5
+
+Income_Tab
+Income_NumberOfUnits: 123.0
+Income_AvgRent/unit: 1200.0
+Income_OtherIncome: 10000.0
+
+Expense_Tab
+Expense_Electricity: 1001.00
+Expense_WandS: 1001.00
+Expense_PMI: 1001.00
+Expense_Garbage: 1001.00
+Expense_HOA: 1001.00
+Expense_Rep&Main(%): 10.00
+Expense_CapEX(%): 11.00
+Expense_Vacancy(%): 12.00
+Expense_Management(%): 13.00
+
+Assumptions_Tab
+Assumptions_RentAppreciation(%): 0.5
+Assumptions_ExpenseAppreciation(%): 0.7
+Assumptions_PropertyAppreciation(%): 0.8
+Assumptions_SellingCost: 0.9
+

@@ -1,0 +1,43 @@
+Value in the row                          10000.00
+Property_Tab
+Property_Address:123 SFI Dr.
+Property_City:Anytown
+Property_State:AK
+Property_ZipCode:12340
+Property_PriorYearsTaxes:500.0
+Property_LandLordInsurance:230.0
+
+Purchase_Tab
+Purchase_AskingPrice: 0.0
+Purchase_PurchasePrice: 200000.0
+Purchase_FinanceRehab: Yes
+Purchase_RehabBudget: 50000.0
+Purchase_ARV: 325000.0
+Purchase_ClosingCost: 3500.0
+Purchase_EmergencyFund: 5000.0
+Purchase_Downpayment(%): 0.2
+Purchase_Term: 30
+Purchase_AnnauLInterestRate: 0.045
+
+Income_Tab
+Income_NumberOfUnits: 1.0
+Income_AvgRent/unit: 1200.0
+Income_OtherIncome: 0.0
+
+Expense_Tab
+Expense_Electricity: 
+Expense_WandS: 
+Expense_PMI: 
+Expense_Garbage: 
+Expense_HOA: 
+Expense_Rep&Main(%): 
+Expense_CapEX(%): 
+Expense_Vacancy(%): 
+Expense_Management(%): 
+
+Assumptions_Tab
+Assumptions_RentAppreciation(%): 0.002
+Assumptions_ExpenseAppreciation(%): 0.003
+Assumptions_PropertyAppreciation(%): 0.004
+Assumptions_SellingCost: 0.005
+
