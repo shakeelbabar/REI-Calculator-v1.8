@@ -190,11 +190,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.address_input.setText("123 SFI Dr.")
         self.ui.city_input.setText("Anytown")
         self.ui.zip_input.setText(str(12340))
-        self.ui.taxes_input.setText(str(500))
-        self.ui.annual_insurance_input.setText(str(230))
+        self.ui.taxes_input.setText(str(1200))
+        self.ui.annual_insurance_input.setText(str(600))
         self.property_images = []
 
-        self.ui.asking_price_input.setText(str(0))
+        self.ui.asking_price_input.setText(str(200000))
         self.ui.purchase_price_input.setText(str(200000))
         self.ui.arv_input.setText(str(325000))
         self.ui.purchase_price_input.setText(str(200000))
@@ -203,18 +203,18 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.ui.emerg_fund_input.setText(str(5000))
 
         # fixed expenses
+        
 
         # variable expenses
 
         # income
-        self.ui.other_income_month_input.setText(str(1300))
-        self.ui.ave_rent_input.setText(str(1200))
+        self.ui.ave_rent_input.setText(str(2500))
 
         # assumptions
-        self.ui.rent_appreciation_input.setText(str(20 / 100))
-        self.ui.exp_appreciation_input.setText(str(30 / 100))
-        self.ui.prop_appreciation_input.setText(str(40 / 100))
-        self.ui.selling_costs_input.setText(str(50 / 100))
+        self.ui.rent_appreciation_input.setText(str(2))
+        self.ui.exp_appreciation_input.setText(str(2))
+        self.ui.prop_appreciation_input.setText(str(2))
+        self.ui.selling_costs_input.setText(str(10.5))
         
     def validate_values(self):
         try:
@@ -356,8 +356,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             
         except Exception as ex:
             _, _, tb = sys.exc_info()
-            self.show_message(message='Validate values', 
-                              details=f'Line: {tb.tb_lineno},\n {str(ex)}', 
+            self.show_message(message='Validate values', \
+                              details=f'Line: {tb.tb_lineno},\n {str(ex)}', \
                               msg_type='warning')
             return False
         
@@ -636,7 +636,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # print(fileName)
             file = open(fileName, 'w')
-            print("opened")
 
             # Property information tab inputs
             file.write(str("Property_Tab\n"))
@@ -697,8 +696,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             file.write("Assumptions_ExpenseAppreciation(%): "+str(self.exp_appreciation)+"\n")
             file.write("Assumptions_PropertyAppreciation(%): "+str(self.prop_appreciation)+"\n")
             file.write("Assumptions_SellingCost: "+str(self.selling_costs)+"\n\n")
-
-            print("success all written")
             file.close()
             QMessageBox.information(self, "Save File", "File Saved Successfully", QMessageBox.Ok)
 
@@ -727,8 +724,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.property_images, _ = PyQt5.QtWidgets.QFileDialog.getOpenFileNames(None, "Open File", "",
                                                                   "All files (*.*)", options=options)
         if self.property_images:
+            print("Total Images Selected: ",len(self.property_images))
             print(self.property_images)
-            print(len(self.property_images))
 
     def focused_field(self, ui_control, ftype='dollar'):
         if ftype == 'dollar':
@@ -1039,7 +1036,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             ui_control.setText(decimal_float)
         except Exception as ex:
             print('set_decimal_format:', ex)
-            ui_control.setText('0')       
+            ui_control.setText('0')
        
     
     def fin_rehab_logical_changed(self, index):
@@ -1489,7 +1486,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         length_yrs = range(1, 31)
 
         for year_index in length_yrs:
-            print("year iteration ",year_index)
             # Everything will be on a yearly scale and we may calculate some
             # variables two time for this first year
 
@@ -1518,7 +1514,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                                   msg_type='warning')
                 break
 
-            print("var_yearly")
             # Calculate total variable expenses for each year
             var_yearly = tot_income_annual * sum(
                 [self.rep_and_main, self.cap_ex, self.vacancy, self.management]
@@ -1527,52 +1522,36 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             # Calculate Total Expenses
             tot_expense_yearly = sum([fixed_yearly, var_yearly])
 
-            print("NOI")
             # Calculate NOI
             NOI_inLoop = REI_Calculations.NOI_yearly(
                 tot_income_annual, fixed_yearly, var_yearly
             )
-            print("NOI Growth")
-            print("NOI inLoop: ",NOI_inLoop)
-            print("NOI : ",self.NOI)
             NOI_growth = REI_Calculations.growth_rate(
                 NOI_inLoop, self.NOI, year_index
             )
-            print("NOI inGrowth: ",NOI_growth)
-            print("Debt Service")
             # Calculate Debt service
 
-            # temporary payment value
-            # payment = 567890
             if self.term < year_index:
                 self.payment = 0
             # print(payment," is payment")
             payment_annual = self.payment * 12
 
-            # print("payment; ", payment_annual)
-
             # Calculate NIAF
             NIAF = REI_Calculations.NIAF_yearly(NOI_inLoop, self.payment)
-
-            print('NIAF:', NIAF)
 
             # Calculate Property Value
             prop_value = REI_Calculations.future_value(
                 self.prop_appreciation, year_index - 1, 0, self.arv
             )
-            print("prop value: ", prop_value)
             # Calculate Cash on Cash Return
             CoCR = REI_Calculations.cash_on_cash_return(NIAF, self.cash_2_close)
 
-            print("CoCR")
             # Calculate cumulative CoCR
             cum_CoCR = cum_CoCR + CoCR
 
-            print("NIAF")
             # Calculate cumulative NIAF
             cum_NIAF = cum_NIAF + NIAF
 
-            print("loan balance")
             # Calculate future loan balance
             loan_balance = REI_Calculations.future_value(
                 self.int_rate / 12, year_index * 12, self.payment, self.loan_amount_auto
@@ -1583,7 +1562,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             # Calculate percent of equity owned by the investor
             equity_perc = tot_equity / prop_value
 
-            print("ROI")
             # Calculate ROI
             ROI = REI_Calculations.return_on_investment(
                 tot_equity, cum_NIAF, self.cash_2_close
@@ -1600,7 +1578,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 total_profit_sold + self.cash_2_close, self.cash_2_close, year_index
             )
 
-            print("temp Data for year: ",year_index)
 
             self.data_thirty_years_tmp[f'Year_{year_index}'] = [
                 tot_income_annual, tot_expense_yearly, fixed_yearly,
@@ -1613,7 +1590,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
             # TODO: remove after testing
             # self.tmp_data[f'Year_{year_index}'] = [randint(0, 1200) for _ in range(16)]
-            print("formatting values")
             # format numbers to two decimal values
             tot_income_annual = '{:0,.2f}'.format(tot_income_annual)
             tot_expense_yearly = '{:0,.2f}'.format(tot_expense_yearly)
@@ -1636,7 +1612,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 print("run_calculations: CAGR exception: ", ex)
                 format_CAGR = CAGR
 
-            print("set data index for :", year_index )
             self.data_thirty_years[f'Year_{year_index}'] = [
                 f'${tot_income_annual}', f'${tot_expense_yearly}', f'${fixed_yearly}',
                 f'${var_yearly}', f'${NOI_inLoop}', f'{NOI_growth}%',
@@ -1645,7 +1620,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 f'{equity_perc}%', f'{ROI}%', f'${total_profit_sold}',
                 f'{format_CAGR}%'
             ]
-        print("30 Years Proforma:\n",self.data_thirty_years)
+        # print("30 Years Proforma:\n",self.data_thirty_years)
 
     def amoritzationSchedule(self):
         # Will show the amoritzation schedule of the financing for 30 years
@@ -1656,45 +1631,36 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # Payment period, Starting Principle, Interest Paid, Principle Paid
         # Total Interest Paid, Total Principle Paid, Total Paid, Loan Balance
 
-        print("in amortization")
-
         # Clear out the tables for amoritzation
         self.tab1data = defaultdict(list)
         self.tab2data = defaultdict(list)
 
-        print("after reseting tables")
         # Set the initial values
         beginning_princ = self.loan_amount_auto
-        last_year = self.term_years
+        last_year   = self.term_years
         tot_int_paid = 0
         tot_princ_paid = 0
 
-        print("values set")
-
         for monthIn in range(1, 361):
-            print("iteration :", monthIn)
             # 361 is the total number of periods in 30 years
             # need to create two tables
 
-            # Period number
-            payment_period = monthIn
             # ending balance of the
-            ending_princ = REI_Calculations.future_value(self.int_rate / 12, monthIn, payment_period, self.loan_amount_auto)
+            ending_princ = REI_Calculations.future_value(self.int_rate / 12, monthIn, self.payment, self.loan_amount_auto)
             # Principle paid down for this period
             princ_paid = beginning_princ - ending_princ
             # interest paid in this pay period
-            int_paid = payment_period - princ_paid
+            int_paid = self.payment - princ_paid
             # Total interest paid
             tot_int_paid = tot_int_paid + int_paid
             # Total Principle Paid
             tot_princ_paid = tot_princ_paid + princ_paid
 
-            print("calculation done")
             # Create the table objects
             if monthIn < 25:
+
                 # This is table 1 monthly results for the first two years
-                print("paymner period: ",payment_period)
-                monthly_per = '{:0,.0f}'.format(payment_period)
+                monthly_per = '{:0,.0f}'.format(monthIn)
                 monthly_beg_princ = '{:0,.2f}'.format(beginning_princ)
                 monthly_int_paid = '{:0,.2f}'.format(int_paid)
                 monthly_princ_paid = '{:0,.2f}'.format(princ_paid)
@@ -1702,17 +1668,15 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 monthly_tot_princ = '{:0,.2f}'.format(tot_princ_paid)
                 monthly_end_princ = '{:0,.2f}'.format(ending_princ)
 
-                print("inserting into table at :",monthly_per)
                 # Starting Principle, Interest Paid, Principle Paid
                 # Total Interest Paid, Total Principle Paid, Loan Balance
                 self.tab1data[f'Month_{monthly_per}'] = [
                     f'${monthly_beg_princ}', f'${monthly_int_paid}', f'${monthly_princ_paid}',
                     f'${monthly_tot_int}', f'${monthly_tot_princ}', f'${monthly_end_princ}'
                 ]
-            if (monthIn % 12 == 0) and monthIn > 24:
+            if (monthIn % 12 == 0):
                 # This is table 2, yearly resuts for thirty years
-                print("payment period :",payment_period/12)
-                yearly_per = '{:0,.0f}'.format(payment_period / 12)
+                yearly_per = '{:0,.0f}'.format(monthIn / 12)
                 yearly_beg_princ = '{:0,.2f}'.format(beginning_princ)
                 yearly_int_paid = '{:0,.2f}'.format(int_paid)
                 yearly_princ_paid = '{:0,.2f}'.format(princ_paid)
@@ -1720,19 +1684,29 @@ class CalculatorWindow(QtWidgets.QMainWindow):
                 yearly_tot_princ = '{:0,.2f}'.format(tot_princ_paid)
                 yearly_end_princ = '{:0,.2f}'.format(ending_princ)
 
-                print("inserting into table at :",yearly_per)
                 self.tab2data[f'Year_{yearly_per}'] = [
                     f'${yearly_beg_princ}', f'${yearly_int_paid}', f'${yearly_princ_paid}',
                     f'${yearly_tot_int}', f'${yearly_tot_princ}', f'${yearly_end_princ}'
                 ]
-
             beginning_princ = ending_princ
 
     def generate_report(self):
-
         if not self.validate_values():
             return
 
+        prop_images = None
+        if self.ui.load_images_check.isChecked():
+            if(self.property_images.__len__() == 0):
+                check = QMessageBox.question(self, "Confirm", "You have not loaded any Image of Property. Do you want to continue?",
+                                             QMessageBox.Yes | QMessageBox.No)
+                if(check == QMessageBox.Yes):
+                    prop_images = None
+                elif check == QMessageBox.No:
+                    return
+            else:
+                prop_images = self.property_images
+
+        generate_graphs = False
         if self.ui.additional_graphs_check.isChecked():
             from Graphs import Graphs
             Graphs.montheExpense_PieChart(int(self.total_fixed_expense), int(self.total_variable_expense))
@@ -1740,6 +1714,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             Graphs.fiftyRule_BarGraph(int(self.total_income_monthly))
             Graphs.onePercent_Rule(int(self.total_income_monthly), int(self.purchase_price), int(self.rehab_budget))
             Graphs.seventyPercent_Chart(int(self.arv), int(self.rehab_budget), int(self.purchase_price))
+            generate_graphs = True
 
         # self.init_fake_values()
         self.run_calculations()
@@ -1754,10 +1729,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             self.tab1data = None
             self.tab2data = None
 
-        if self.ui.load_images_check.isChecked():
-            prop_images = self.property_images
-        else:
-            prop_images = None
+
 
         if not self.data:
             print("No data after calculations")
@@ -1766,12 +1738,9 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         if self.data_thirty_years == None:
             print("No data for Full Proforma")
         # dataframe for plotting three totals
-        print("here plot")
         plot_data = DataFrame.from_dict(self.tmp_data).iloc[[0,1,7], :]
-
         # # dataframe for plotting three totals
         # plot_data_thiity_years = DataFrame.from_dict(self.data_thirty_years_tmp).iloc[[0,1,7], :]
-        print("after plot")
         property_data = {
             'address': self.address,
             'city': self.city,
@@ -1780,7 +1749,6 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             'prior_year_taxes': self.prior_year_taxes,
             'landford_insurance': self.landford_insurance
         }
-        print("property data..")
         html_report = data_output.generate_report(
             self.general_analysis_and_results, 
             self.data,
@@ -1789,7 +1757,8 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             property_data,
             self.tab1data,
             self.tab2data,
-            prop_images
+            prop_images,
+            generate_graphs
         )
         if(html_report):
             # self.saveAsPDF(html_report)
@@ -1919,7 +1888,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             [ 
                 '${:0,.2f}'.format(var_monthly + self.fixed_monthly),
                 '${:0,.2f}'.format(cf_monthly), 
-                '{:0,.2f}%'.format(one_perc)
+                '{:0,.2f}%'.format(fifty_perc)
             ], 
             [ 
                 '${:0,.2f}'.format(self.NOI),
@@ -1928,7 +1897,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
             ],
             [ 
                 '{:0,.2f}%'.format(capRate), 
-                '{:0,.2f}%'.format(fifty_perc),  
+                '{:0,.2f}%'.format(one_perc),  
                 '{:0,.2f}'.format(GRM)
             ]
         ]
@@ -2119,6 +2088,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
 
         ## 50% Rule - Bar Graph
         half_of_income = self.total_income_monthly / 2
+        total_expense  = self.fixed_yearly + self.year
         # Note: the second bar is 'total_expenses'
 
         # Create a horizontal bar graph 
@@ -2150,8 +2120,7 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         # If possible, on the right side of each bar I would like to show the percentage
         max_offer_perc      = 70 # as a percentage - 70%
         act_offer_perc      = sum(self.purchase_price, self.rehab_budget) / self.arv
-        print("completed")
-        
+
     # def fullProForma(self):
     #     # Will show a full 30-Year Pro Forma Statement - Table
     #     # Set initial values
